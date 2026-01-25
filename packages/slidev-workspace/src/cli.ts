@@ -42,7 +42,7 @@ function createViteConfig(previewPort = DEFAULT_PREVIEW_PORT) {
       },
     },
     define: {
-      __SLIDEV_WORKSPACE_DEV_PORT_BASE__: JSON.stringify(devServerBasePort),
+      __SLIDEV_WORKSPACE_DEV_PORT_BASE__: devServerBasePort,
     },
     build: {
       outDir: resolve(workspaceCwd, config.outputDir),
