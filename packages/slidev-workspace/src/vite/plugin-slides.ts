@@ -10,8 +10,13 @@ import {
 } from "../scripts/devServer.js";
 import { transformIndexHtml } from "./transformIndexHtml";
 
-export function slidesPlugin(): Plugin {
+interface SlidesPluginOptions {
+  devServerBasePort?: number;
+}
+
+export function slidesPlugin(options: SlidesPluginOptions = {}): Plugin {
   let devServers: DevServerInfo[] = [];
+  const devServerBasePort = options.devServerBasePort ?? 3001;
 
   return {
     name: "vite-plugin-slides",
@@ -78,7 +83,9 @@ export function slidesPlugin(): Plugin {
       const slidesDirs = resolveSlidesDirs(config);
 
       try {
-        devServers = await startAllSlidesDevServer();
+        devServers = await startAllSlidesDevServer({
+          basePort: devServerBasePort,
+        });
       } catch (error) {
         console.error("❌ Failed to start slides dev servers:", error);
       }

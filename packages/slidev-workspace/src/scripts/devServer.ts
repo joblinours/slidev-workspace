@@ -12,14 +12,16 @@ export interface DevServerInfo {
 // Global tracking to prevent duplicate server starts
 const runningServers = new Map<string, DevServerInfo>();
 
-export async function startAllSlidesDevServer(
-  workspaceCwd?: string,
-): Promise<DevServerInfo[]> {
-  const cwd = workspaceCwd || process.env.SLIDEV_WORKSPACE_CWD || process.cwd();
+export async function startAllSlidesDevServer({
+  basePort = 3001,
+}: {
+  basePort?: number;
+} = {}): Promise<DevServerInfo[]> {
+  const cwd = process.env.SLIDEV_WORKSPACE_CWD || process.cwd();
   const config = loadConfig(cwd);
   const slidesDirs = resolveSlidesDirs(config, cwd);
 
-  let currentPort = 3001; // Start from 3001, 3000 is reserved for preview app
+  let currentPort = basePort;
   const devServers: DevServerInfo[] = [];
 
   console.log("🚀 Starting Slidev dev servers for all slides...");

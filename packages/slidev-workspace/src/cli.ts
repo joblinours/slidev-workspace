@@ -17,25 +17,38 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const packageRoot = join(__dirname, "..");
+const DEFAULT_PREVIEW_PORT = 3000;
 
-function createViteConfig() {
+function parsePortOption(value: string) {
+  const port = Number(value);
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error(`Invalid port: ${value}`);
+  }
+  return port;
+}
+
+function createViteConfig(previewPort = DEFAULT_PREVIEW_PORT) {
   const workspaceCwd = process.env.SLIDEV_WORKSPACE_CWD || process.cwd();
   const config = loadConfig(workspaceCwd);
+  const devServerBasePort = previewPort + 1;
 
   return {
     root: resolve(packageRoot, "src/preview"),
     base: config.baseUrl,
-    plugins: [vue(), tailwindcss(), slidesPlugin()],
+    plugins: [vue(), tailwindcss(), slidesPlugin({ devServerBasePort })],
     resolve: {
       alias: {
         "@": resolve(packageRoot, "src/preview"),
       },
     },
+    define: {
+      __SLIDEV_WORKSPACE_DEV_PORT_BASE__: JSON.stringify(devServerBasePort),
+    },
     build: {
       outDir: resolve(workspaceCwd, config.outputDir),
     },
     server: {
-      port: 3000,
+      port: previewPort,
       open: true,
     },
   };
@@ -213,12 +226,12 @@ async function runViteBuild(names?: string[]) {
   }
 }
 
-async function runVitePreview() {
+async function runVitePreview(previewPort?: number) {
   try {
     console.log("🚀 Starting Slidev Workspace development server...");
 
     // The slidesPlugin will automatically start all slides dev servers
-    const config = createViteConfig();
+    const config = createViteConfig(previewPort);
     const server = await createServer(config);
     await server.listen();
     server.printUrls();
@@ -241,9 +254,12 @@ Commands:
                        [names]: Optional slide folder names (comma-separated or space-separated)
   export-og            Export OG images for all slides
   help                 Show this help message
+Options:
+  --port, -p <number>  Set the preview server port (dev/preview only)
 
 Examples:
   slidev-workspace dev                                    # Start development server
+  slidev-workspace dev --port 3030                        # Start dev server on custom port
   slidev-workspace build                                  # Build all slides and preview app
   slidev-workspace build slide1,slide2                    # Build only specific slides by name
   slidev-workspace export-og                              # Export OG images for all slides
@@ -282,9 +298,12 @@ async function main() {
     .command("dev")
     .alias("preview")
     .description("Start the development server")
-    .action(async () => {
+    .option("-p, --port <number>", "Set the preview server port", (value) =>
+      parsePortOption(value),
+    )
+    .action(async (options: { port?: number }) => {
       setWorkspaceCwd();
-      await runVitePreview();
+      await runVitePreview(options.port);
     });
 
   program
