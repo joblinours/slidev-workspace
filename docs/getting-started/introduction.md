@@ -87,4 +87,5 @@ The `useSlides` composable returns frontmatter data from all discovered presenta
 Ready to get started?
 
 - [Quick Start](./quick-start.md) - Get up and running in 5 minutes
+- [CLI Cheatsheet](./cli-cheatsheet.md) - Quick reference for CLI commands and flags
 - [Deploy Guide](./deploy.md) - Learn how to deploy to GitHub Pages

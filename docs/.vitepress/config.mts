@@ -21,12 +21,16 @@ export default defineConfig({
           { text: "Configuration", link: "/getting-started/configuration" },
           { text: "Deploy", link: "/getting-started/deploy" },
           { text: "Troubleshooting", link: "/getting-started/troubleshooting" },
+          { text: "CLI cheatsheet", link: "/getting-started/cli-cheatsheet" },
         ],
       },
       {
         text: "Customizations",
         items: [
-          { text: "OG Image Priority", link: "/getting-started/og-image-priority" },
+          {
+            text: "OG Image Priority",
+            link: "/getting-started/og-image-priority",
+          },
           { text: "Export OG Images", link: "/getting-started/export-og" },
         ],
       },
