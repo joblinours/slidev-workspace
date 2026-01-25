@@ -89,6 +89,10 @@ export function resolveImageUrl(slide: SlideInfo, domain: string): string {
 export function useSlides() {
   const slidesData = ref<SlideInfo[]>([]);
   const isLoading = ref(true);
+  const devServerBasePort =
+    typeof __SLIDEV_WORKSPACE_DEV_PORT_BASE__ === "number"
+      ? __SLIDEV_WORKSPACE_DEV_PORT_BASE__
+      : 3001;
 
   // Dynamically import slidev:content to avoid build-time issues
   const loadSlidesData = async () => {
@@ -110,8 +114,8 @@ export function useSlides() {
     if (!slidesData.value || slidesData.value.length === 0) return [];
 
     return slidesData.value.map((slide, index) => {
-      // Generate port based on slide index: 3001, 3002, 3003...
-      const port = 3001 + index;
+      // Generate port based on slide index: base, base + 1, base + 2...
+      const port = devServerBasePort + index;
       // Create dev server URL
       const devServerUrl = `http://localhost:${port}`;
       const domain = IS_DEVELOPMENT ? devServerUrl : window.location.origin;

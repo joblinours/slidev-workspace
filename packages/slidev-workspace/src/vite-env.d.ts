@@ -14,3 +14,5 @@ declare module "slidev:config" {
   const config: ConfigData;
   export default config;
 }
+
+declare const __SLIDEV_WORKSPACE_DEV_PORT_BASE__: number;
