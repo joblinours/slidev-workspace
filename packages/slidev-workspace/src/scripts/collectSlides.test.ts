@@ -26,6 +26,7 @@ describe("slides helpers", () => {
     expect(warnSpy).toHaveBeenCalledWith(
       `⚠️ Slides directory not found: ${missingDir}`,
     );
+    warnSpy.mockRestore();
   });
 
   it("collectSlides filters by provided names", () => {
