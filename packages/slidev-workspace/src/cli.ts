@@ -66,7 +66,7 @@ async function buildSlides(names?: string[]) {
       : "🔨 Building all slides...",
   );
 
-  const slides = collectSlides({ slidesDirs, names });
+  const slides = collectSlides({ slidesDirs, names, exclude: config.exclude });
 
   for (const { slideDir, slideName } of slides) {
     const packageJsonPath = join(slideDir, "package.json");
@@ -117,7 +117,7 @@ async function exportOgImages() {
     console.log("📦 Copying exported images to og-image.png...");
 
     // Copy the exported files to og-image.png for each slide
-    const slides = collectSlides({ slidesDirs });
+    const slides = collectSlides({ slidesDirs, exclude: config.exclude });
 
     for (const { slideDir, slideName } of slides) {
       const packageJsonPath = join(slideDir, "package.json");
@@ -164,7 +164,7 @@ async function copySlidesToOutputDir(names?: string[]) {
   }
 
   // Copy slides
-  const slides = collectSlides({ slidesDirs, names });
+  const slides = collectSlides({ slidesDirs, names, exclude: config.exclude });
 
   for (const { slideDir, slideName } of slides) {
     const slideDistDir = join(slideDir, "dist");
