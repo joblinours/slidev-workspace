@@ -7,7 +7,8 @@ import {
   startAllSlidesDevServer,
   stopAllDevServers,
   type DevServerInfo,
-} from "../scripts/devServer.js";
+} from "../scripts/devServer";
+import { collectSlides } from "../scripts/collectSlides";
 import { transformIndexHtml } from "./transformIndexHtml";
 
 interface SlidesPluginOptions {
@@ -29,44 +30,34 @@ export function slidesPlugin(options: SlidesPluginOptions = {}): Plugin {
       try {
         const config = loadConfig();
         const slidesDirs = resolveSlidesDirs(config);
+        const slides = collectSlides({ slidesDirs, exclude: config.exclude });
 
-        for (const slidesDir of slidesDirs) {
-          if (!existsSync(slidesDir)) {
+        for (const { slideDir } of slides) {
+          // Each slide has its own dist directory: slides/[slideDir]/dist
+          const slideDistPath = join(slideDir, "dist");
+          const assetsPath = join(slideDistPath, "assets");
+
+          if (!existsSync(assetsPath)) {
             continue;
           }
 
-          const slideDirs = readdirSync(slidesDir, { withFileTypes: true })
-            .filter((dirent) => dirent.isDirectory())
-            .filter((dirent) => !(config.exclude || []).includes(dirent.name))
-            .map((dirent) => dirent.name);
+          // Look for og-image-[hash].png files in assets
+          const assetFiles = readdirSync(assetsPath);
+          const ogImageFile = assetFiles.find((file) =>
+            /^og-image-[a-zA-Z0-9]+\.png$/.test(file),
+          );
 
-          for (const slideDir of slideDirs) {
-            // Each slide has its own dist directory: slides/[slideDir]/dist
-            const slideDistPath = join(slidesDir, slideDir, "dist");
-            const assetsPath = join(slideDistPath, "assets");
+          if (ogImageFile) {
+            const sourceFile = join(assetsPath, ogImageFile);
+            const destFile = join(slideDistPath, "og-image.png");
 
-            if (!existsSync(assetsPath)) {
-              continue;
-            }
-
-            // Look for og-image-[hash].png files in assets
-            const assetFiles = readdirSync(assetsPath);
-            const ogImageFile = assetFiles.find((file) =>
-              /^og-image-[a-zA-Z0-9]+\.png$/.test(file),
-            );
-
-            if (ogImageFile) {
-              const sourceFile = join(assetsPath, ogImageFile);
-              const destFile = join(slideDistPath, "og-image.png");
-
-              try {
-                cpSync(sourceFile, destFile, { force: true });
-              } catch (error) {
-                console.warn(
-                  `⚠ Failed to copy og-image for ${slideDir}:`,
-                  error,
-                );
-              }
+            try {
+              cpSync(sourceFile, destFile, { force: true });
+            } catch (error) {
+              console.warn(
+                `⚠ Failed to copy og-image for ${slideDir}:`,
+                error,
+              );
             }
           }
         }
