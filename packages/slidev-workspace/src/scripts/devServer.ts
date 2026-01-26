@@ -34,8 +34,10 @@ export async function startAllSlidesDevServer({
       continue;
     }
 
+    const excludedSlides = config.exclude ?? [];
     const slides = readdirSync(slidesDir, { withFileTypes: true })
       .filter((dirent) => dirent.isDirectory())
+      .filter((dirent) => !excludedSlides.includes(dirent.name))
       .map((dirent) => dirent.name);
 
     for (const slideName of slides) {
