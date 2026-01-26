@@ -2,7 +2,7 @@
 
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
-import { readdirSync, existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { cp, rm } from "node:fs/promises";
 import { execSync } from "node:child_process";
 import { Command } from "commander";
@@ -10,8 +10,9 @@ import { build, createServer } from "vite";
 import vue from "@vitejs/plugin-vue";
 import tailwindcss from "@tailwindcss/vite";
 
-import { slidesPlugin } from "./vite/plugin-slides.js";
-import { loadConfig, resolveSlidesDirs } from "./scripts/config.js";
+import { slidesPlugin } from "./vite/plugin-slides";
+import { loadConfig, resolveSlidesDirs } from "./scripts/config";
+import { collectSlides } from "./scripts/collectSlides";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -65,48 +66,36 @@ async function buildSlides(names?: string[]) {
       : "🔨 Building all slides...",
   );
 
-  for (const slidesDir of slidesDirs) {
-    if (!existsSync(slidesDir)) {
-      console.warn(`⚠️ Slides directory not found: ${slidesDir}`);
+  const slides = collectSlides({ slidesDirs, names });
+
+  for (const { slideDir, slideName } of slides) {
+    const packageJsonPath = join(slideDir, "package.json");
+
+    if (!existsSync(packageJsonPath)) {
+      console.warn(`⚠️ Skipping ${slideName}: no package.json found`);
       continue;
     }
 
-    const slides = names
-      ? names.filter((name) => existsSync(join(slidesDir, name)))
-      : readdirSync(slidesDir, { withFileTypes: true })
-          .filter((dirent) => dirent.isDirectory())
-          .map((dirent) => dirent.name);
+    console.log(`📦 Building slide: ${slideName}`);
 
-    for (const slideName of slides) {
-      const slideDir = join(slidesDir, slideName);
-      const packageJsonPath = join(slideDir, "package.json");
-
-      if (!existsSync(packageJsonPath)) {
-        console.warn(`⚠️ Skipping ${slideName}: no package.json found`);
-        continue;
-      }
-
-      console.log(`📦 Building slide: ${slideName}`);
-
-      try {
-        // Use execSync to run pnpm build command for each slide
-        const baseUrl = config.baseUrl.endsWith("/")
-          ? config.baseUrl
-          : config.baseUrl + "/";
-        const subDir = slideDir.startsWith(workspaceCwd)
-          ? slideDir.replace(workspaceCwd, "").replace(/^\//, "")
-          : slideDir;
-        const buildCmd = `pnpm --filter "./${subDir}" run build --base ${baseUrl}${slideName}/`;
-        console.log(buildCmd);
-        execSync(buildCmd, {
-          cwd: workspaceCwd,
-          stdio: "inherit",
-        });
-        console.log(`✅ Built slide: ${slideName}`);
-      } catch (error) {
-        console.error(`❌ Failed to build slide ${slideName}:`, error);
-        process.exit(1);
-      }
+    try {
+      // Use execSync to run pnpm build command for each slide
+      const baseUrl = config.baseUrl.endsWith("/")
+        ? config.baseUrl
+        : config.baseUrl + "/";
+      const subDir = slideDir.startsWith(workspaceCwd)
+        ? slideDir.replace(workspaceCwd, "").replace(/^\//, "")
+        : slideDir;
+      const buildCmd = `pnpm --filter "./${subDir}" run build --base ${baseUrl}${slideName}/`;
+      console.log(buildCmd);
+      execSync(buildCmd, {
+        cwd: workspaceCwd,
+        stdio: "inherit",
+      });
+      console.log(`✅ Built slide: ${slideName}`);
+    } catch (error) {
+      console.error(`❌ Failed to build slide ${slideName}:`, error);
+      process.exit(1);
     }
   }
 }
@@ -128,39 +117,29 @@ async function exportOgImages() {
     console.log("📦 Copying exported images to og-image.png...");
 
     // Copy the exported files to og-image.png for each slide
-    for (const slidesDir of slidesDirs) {
-      if (!existsSync(slidesDir)) {
-        console.warn(`⚠️ Slides directory not found: ${slidesDir}`);
+    const slides = collectSlides({ slidesDirs });
+
+    for (const { slideDir, slideName } of slides) {
+      const packageJsonPath = join(slideDir, "package.json");
+
+      if (!existsSync(packageJsonPath)) {
         continue;
       }
 
-      const slides = readdirSync(slidesDir, { withFileTypes: true })
-        .filter((dirent) => dirent.isDirectory())
-        .map((dirent) => dirent.name);
+      const exportedFile = join(slideDir, "slides-export", "1.png");
+      const targetFile = join(slideDir, "og-image.png");
+      const exportDir = join(slideDir, "slides-export");
 
-      for (const slideName of slides) {
-        const slideDir = join(slidesDir, slideName);
-        const packageJsonPath = join(slideDir, "package.json");
+      if (existsSync(exportedFile)) {
+        await cp(exportedFile, targetFile);
+        console.log(`✅ Generated OG image for: ${slideName}`);
 
-        if (!existsSync(packageJsonPath)) {
-          continue;
-        }
-
-        const exportedFile = join(slideDir, "slides-export", "1.png");
-        const targetFile = join(slideDir, "og-image.png");
-        const exportDir = join(slideDir, "slides-export");
-
-        if (existsSync(exportedFile)) {
-          await cp(exportedFile, targetFile);
-          console.log(`✅ Generated OG image for: ${slideName}`);
-
-          // Clean up the slides-export directory
-          await rm(exportDir, { recursive: true, force: true });
-        } else {
-          console.warn(
-            `⚠️ Export file not found for ${slideName}: ${exportedFile}`,
-          );
-        }
+        // Clean up the slides-export directory
+        await rm(exportDir, { recursive: true, force: true });
+      } else {
+        console.warn(
+          `⚠️ Export file not found for ${slideName}: ${exportedFile}`,
+        );
       }
     }
 
@@ -185,23 +164,15 @@ async function copySlidesToOutputDir(names?: string[]) {
   }
 
   // Copy slides
-  for (const slidesDir of slidesDirs) {
-    if (!existsSync(slidesDir)) continue;
+  const slides = collectSlides({ slidesDirs, names });
 
-    const slides = names
-      ? names.filter((name) => existsSync(join(slidesDir, name)))
-      : readdirSync(slidesDir, { withFileTypes: true })
-          .filter((dirent) => dirent.isDirectory())
-          .map((dirent) => dirent.name);
+  for (const { slideDir, slideName } of slides) {
+    const slideDistDir = join(slideDir, "dist");
+    const targetDir = join(deployDir, slideName);
 
-    for (const slideName of slides) {
-      const slideDistDir = join(slidesDir, slideName, "dist");
-      const targetDir = join(deployDir, slideName);
-
-      if (existsSync(slideDistDir)) {
-        console.log(`📋 Copying ${slideName}...`);
-        await cp(slideDistDir, targetDir, { recursive: true });
-      }
+    if (existsSync(slideDistDir)) {
+      console.log(`📋 Copying ${slideName}...`);
+      await cp(slideDistDir, targetDir, { recursive: true });
     }
   }
 
