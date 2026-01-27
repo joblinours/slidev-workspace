@@ -10,6 +10,19 @@ export default defineConfig({
     nav: [
       { text: "Home", link: "/" },
       { text: "Documentation", link: "/getting-started/introduction" },
+      {
+        text: "Related Projects",
+        items: [
+          {
+            text: "Slidev Workspace Starter",
+            link: "https://github.com/leochiu-a/slidev-workspace-starter",
+          },
+          {
+            text: "Slidev Theme Gemini",
+            link: "https://github.com/leochiu-a/slidev-theme-gemini",
+          },
+        ],
+      },
     ],
 
     sidebar: [
