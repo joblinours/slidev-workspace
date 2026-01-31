@@ -118,7 +118,7 @@
         </div>
 
         <div
-          class="mt-8 grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
+          class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
         >
           <SlideCard
             v-for="slide in filteredSlides"
