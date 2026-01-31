@@ -1,5 +1,15 @@
 # slidev-workspace
 
+## 0.9.0
+
+### Minor Changes
+
+- f3473c8: Add sidebar configuration and folder-based categories for slide browsing.
+
+### Patch Changes
+
+- 45b4b42: Refactor CLI implementation into smaller modules.
+
 ## 0.8.0
 
 ### Minor Changes
