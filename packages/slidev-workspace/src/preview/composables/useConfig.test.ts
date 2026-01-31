@@ -14,7 +14,7 @@ describe("useConfig", () => {
    */
   async function setupUseConfig(configData?: {
     hero: { title: string; description: string };
-    sidebar?: { title: string };
+    sidebar?: { title: string; githubUrl?: string };
   }) {
     vi.resetModules();
 
@@ -28,6 +28,7 @@ describe("useConfig", () => {
         },
         sidebar: {
           title: "Slide Deck",
+          githubUrl: "",
         },
       },
     }));
@@ -144,16 +145,21 @@ describe("useConfig", () => {
         },
         sidebar: {
           title: "Sidebar Title",
+          githubUrl: "https://github.com/example/repo",
         },
       });
 
       expect(result.sidebar.value.title).toBe("Sidebar Title");
+      expect(result.sidebar.value.githubUrl).toBe(
+        "https://github.com/example/repo",
+      );
     });
 
     it("should return default sidebar values when no config provided", async () => {
       const result = await setupUseConfig();
 
       expect(result.sidebar.value.title).toBe("Slide Deck");
+      expect(result.sidebar.value.githubUrl).toBe("");
     });
   });
 

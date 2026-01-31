@@ -9,6 +9,7 @@ const DEFAULT_CONFIG = {
   },
   sidebar: {
     title: "Slide Deck",
+    githubUrl: "",
   },
 };
 

@@ -15,6 +15,7 @@ const DEFAULT_CONFIG: SlidevWorkspaceConfig = {
   },
   sidebar: {
     title: "Slide Deck",
+    githubUrl: "",
   },
 };
 

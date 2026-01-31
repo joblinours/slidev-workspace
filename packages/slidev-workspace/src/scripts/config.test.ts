@@ -25,6 +25,7 @@ describe("scripts config", () => {
     expect(config.exclude).toEqual(["node_modules", ".git"]);
     expect(config.hero.title).toBe("Slide Deck");
     expect(config.sidebar.title).toBe("Slide Deck");
+    expect(config.sidebar.githubUrl).toBe("");
   });
 
   it("loadConfig merges yaml values with defaults", () => {
@@ -43,6 +44,7 @@ describe("scripts config", () => {
         "  description: Custom Description",
         "sidebar:",
         "  title: Custom Sidebar",
+        "  githubUrl: https://github.com/example/repo",
       ].join("\n"),
     );
 
@@ -58,6 +60,7 @@ describe("scripts config", () => {
     });
     expect(config.sidebar).toEqual({
       title: "Custom Sidebar",
+      githubUrl: "https://github.com/example/repo",
     });
   });
 
@@ -70,6 +73,7 @@ describe("scripts config", () => {
     expect(config.baseUrl).toBe("/custom/");
     expect(config.hero.title).toBe("Slide Deck");
     expect(config.sidebar.title).toBe("Slide Deck");
+    expect(config.sidebar.githubUrl).toBe("");
   });
 
   it("resolveSlidesDirs resolves existing relative and absolute paths", () => {

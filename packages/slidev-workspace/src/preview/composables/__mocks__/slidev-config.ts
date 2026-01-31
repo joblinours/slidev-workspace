@@ -13,6 +13,7 @@ const mockConfigData: ConfigData = {
   },
   sidebar: {
     title: "Slide Deck",
+    githubUrl: "",
   },
 };
 

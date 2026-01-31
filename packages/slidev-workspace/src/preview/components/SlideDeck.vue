@@ -59,7 +59,18 @@
             </button>
           </div>
 
-          <div class="mt-auto flex justify-end pt-6">
+          <div class="mt-auto flex items-center justify-between gap-3 pt-6">
+            <a
+              v-if="sidebar.githubUrl"
+              :href="sidebar.githubUrl"
+              target="_blank"
+              rel="noreferrer"
+              class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+              aria-label="Open GitHub repository"
+            >
+              <Github class="size-5" />
+            </a>
+            <div v-else />
             <button
               @click="toggleDarkMode"
               class="p-2 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
@@ -128,7 +139,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Search, Moon, Sun } from "lucide-vue-next";
+import { Search, Moon, Sun, Github } from "lucide-vue-next";
 
 import { useSlides } from "../composables/useSlides";
 import { useConfig } from "../composables/useConfig";

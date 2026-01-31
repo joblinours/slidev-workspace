@@ -8,6 +8,8 @@ export interface HeroConfig {
 export interface SidebarConfig {
   /** Title displayed at the top of the sidebar. */
   title: string;
+  /** Optional GitHub URL shown in the sidebar. */
+  githubUrl?: string;
 }
 
 /**

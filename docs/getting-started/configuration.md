@@ -75,6 +75,15 @@ sidebar:
   title: "Slidev Workspace"
 ```
 
+### sidebar.githubUrl
+
+**Default:** `""`
+
+```yaml
+sidebar:
+  githubUrl: "https://github.com/your-org/your-repo"
+```
+
 ## Complete Example
 
 Here's a complete example configuration file:
@@ -86,6 +95,7 @@ hero:
 
 sidebar:
   title: "Company Library"
+  githubUrl: "https://github.com/acme/presentations"
 
 baseUrl: "/presentations"
 outputDir: "./dist"
