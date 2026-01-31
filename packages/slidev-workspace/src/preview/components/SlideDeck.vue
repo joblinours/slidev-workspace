@@ -167,6 +167,15 @@ const categoryOptions = computed(() => {
     count,
   }));
 
+  if (categories.length <= 1) {
+    return [
+      {
+        name: "All",
+        count: slidesCount.value,
+      },
+    ];
+  }
+
   return [
     {
       name: "All",
