@@ -1,10 +1,13 @@
 <template>
-  <div
-    class="min-h-screen bg-gradient-to-b from-background via-background to-muted/30 dark:to-black transition-colors"
-  >
-    <div class="mx-auto flex max-w-7xl flex-col gap-10 px-4 py-10 lg:flex-row">
-      <aside class="w-full lg:w-72 lg:shrink-0">
-        <div class="sticky top-6 text-sidebar-foreground">
+  <div class="min-h-screen transition-colors">
+    <div
+      class="min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_280px_minmax(0,3fr)_minmax(0,1fr)]"
+    >
+      <div class="hidden bg-[#F1F1F1] dark:bg-[#121212] lg:block" />
+      <aside
+        class="w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#121212]"
+      >
+        <div class="sticky top-6 px-6 py-10 text-sidebar-foreground">
           <div class="px-1 pb-4">
             <h2 class="text-lg font-semibold tracking-tight">
               {{ sidebar.title }}
@@ -56,8 +59,8 @@
         </div>
       </aside>
 
-      <section class="flex-1">
-        <div class="px-2">
+      <section class="bg-[#F5F5F5] dark:bg-[#191919]">
+        <div class="px-6 py-10 lg:px-12">
           <div
             class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
           >
@@ -97,7 +100,9 @@
           </div>
         </div>
 
-        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        <div
+          class="mt-8 grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
+        >
           <SlideCard
             v-for="slide in filteredSlides"
             :key="slide.title"
@@ -110,6 +115,7 @@
           />
         </div>
       </section>
+      <div class="hidden bg-[#F5F5F5] dark:bg-[#191919] lg:block" />
     </div>
   </div>
 </template>
