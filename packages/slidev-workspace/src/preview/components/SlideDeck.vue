@@ -1,14 +1,11 @@
 <template>
   <div class="min-h-screen transition-colors">
-    <div
-      class="min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_280px_minmax(0,3fr)_minmax(0,1fr)]"
-    >
-      <div class="hidden bg-[#F1F1F1] dark:bg-[#191919] lg:block" />
+    <div class="min-h-screen sw-layout">
       <aside
-        class="w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
+        class="sw-sidebar w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
       >
         <div
-          class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground"
+          class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground w-[270px]"
         >
           <div class="px-1 pb-4">
             <h2 class="text-lg font-semibold tracking-tight">
@@ -84,53 +81,58 @@
         </div>
       </aside>
 
-      <section class="bg-[#F5F5F5] dark:bg-[#121212]">
-        <div class="px-6 py-10 lg:px-12">
-          <div
-            class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
-          >
-            <div>
-              <h1 class="text-3xl font-semibold">{{ hero.title }}</h1>
-              <p class="mt-2 text-sm text-muted-foreground">
-                {{ hero.description }}
-              </p>
+      <header class="sw-header bg-[#F5F5F5] dark:bg-[#121212]">
+        <div class="max-w-[900px]">
+          <div class="px-6 py-10 lg:px-12">
+            <div
+              class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+            >
+              <div>
+                <h1 class="text-3xl font-semibold">{{ hero.title }}</h1>
+                <p class="mt-2 text-sm text-muted-foreground">
+                  {{ hero.description }}
+                </p>
+              </div>
+              <div class="self-start" />
             </div>
-            <div class="self-start" />
-          </div>
 
-          <div
-            class="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-          >
-            <p class="text-sm text-muted-foreground">
-              Found {{ filteredSlides.length }} of {{ slidesCount }} slides
-              <template v-if="searchTerm">
-                <span>
-                  containing "
-                  <span class="font-medium">{{ searchTerm }}</span>
-                  "
-                </span>
-              </template>
-            </p>
-            <div />
+            <div
+              class="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+            >
+              <p class="text-sm text-muted-foreground">
+                Found {{ filteredSlides.length }} of {{ slidesCount }} slides
+                <template v-if="searchTerm">
+                  <span>
+                    containing "
+                    <span class="font-medium">{{ searchTerm }}</span>
+                    "
+                  </span>
+                </template>
+              </p>
+              <div />
+            </div>
           </div>
         </div>
+      </header>
 
-        <div
-          class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
-        >
-          <SlideCard
-            v-for="slide in filteredSlides"
-            :key="slide.url"
-            :title="slide.title"
-            :image="slide.image"
-            :description="slide.description"
-            :url="slide.url"
-            :author="slide.author"
-            :date="slide.date"
-          />
+      <section class="sw-main bg-[#F5F5F5] dark:bg-[#121212]">
+        <div class="max-w-[900px]">
+          <div
+            class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
+          >
+            <SlideCard
+              v-for="slide in filteredSlides"
+              :key="slide.url"
+              :title="slide.title"
+              :image="slide.image"
+              :description="slide.description"
+              :url="slide.url"
+              :author="slide.author"
+              :date="slide.date"
+            />
+          </div>
         </div>
       </section>
-      <div class="hidden bg-[#F5F5F5] dark:bg-[#121212] lg:block" />
     </div>
   </div>
 </template>
@@ -213,3 +215,45 @@ const filteredSlides = computed(() => {
   );
 });
 </script>
+
+<style scoped>
+.sw-layout {
+  display: grid;
+  grid-template-columns:
+    minmax(var(--sw-sidebar-col, var(--sw-sidebar-width, 270px)), 1fr)
+    minmax(
+      0,
+      calc(var(--sw-layout-width, 97rem) - var(--sw-sidebar-width, 270px))
+    );
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main"
+    "sidebar main";
+}
+
+.sw-sidebar {
+  grid-area: sidebar;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sw-header {
+  grid-area: header;
+}
+
+.sw-main {
+  grid-area: main;
+}
+
+@media (max-width: 1024px) {
+  .sw-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "sidebar"
+      "header"
+      "main";
+  }
+}
+</style>
