@@ -62,6 +62,11 @@ describe("cli slides helpers", () => {
       baseUrl: "https://example.com/base",
       outputDir: "dist-output",
       exclude: [],
+      slidesDir: ["slides"],
+      hero: {
+        title: "Slidev Workspace",
+        description: "Test hero",
+      },
     });
     resolveSlidesDirsMock.mockReturnValue([join(tempRoot, "slides")]);
   });
