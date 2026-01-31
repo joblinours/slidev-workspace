@@ -32,6 +32,7 @@ describe("slides helpers", () => {
   it("collectSlides filters by provided names", () => {
     const slidesDir = join(tempRoot, "slides");
     mkdirSync(join(slidesDir, "keep"), { recursive: true });
+    writeFileSync(join(slidesDir, "keep", "slides.md"), "# keep");
 
     const result = collectSlides({
       slidesDirs: [slidesDir],
@@ -51,6 +52,8 @@ describe("slides helpers", () => {
     const slidesDir = join(tempRoot, "slides");
     mkdirSync(join(slidesDir, "a"), { recursive: true });
     mkdirSync(join(slidesDir, "b"), { recursive: true });
+    writeFileSync(join(slidesDir, "a", "slides.md"), "# a");
+    writeFileSync(join(slidesDir, "b", "slides.md"), "# b");
     writeFileSync(join(slidesDir, "file.txt"), "ignore");
 
     const result = collectSlides({ slidesDirs: [slidesDir] }).sort((a, b) =>
@@ -75,6 +78,8 @@ describe("slides helpers", () => {
     const slidesDir = join(tempRoot, "slides");
     mkdirSync(join(slidesDir, "keep"), { recursive: true });
     mkdirSync(join(slidesDir, "skip"), { recursive: true });
+    writeFileSync(join(slidesDir, "keep", "slides.md"), "# keep");
+    writeFileSync(join(slidesDir, "skip", "slides.md"), "# skip");
 
     const result = collectSlides({
       slidesDirs: [slidesDir],
@@ -95,6 +100,8 @@ describe("slides helpers", () => {
     const slidesDir2 = join(tempRoot, "slides2");
     mkdirSync(join(slidesDir1, "alpha"), { recursive: true });
     mkdirSync(join(slidesDir2, "beta"), { recursive: true });
+    writeFileSync(join(slidesDir1, "alpha", "slides.md"), "# alpha");
+    writeFileSync(join(slidesDir2, "beta", "slides.md"), "# beta");
 
     const result = collectSlides({
       slidesDirs: [slidesDir1, slidesDir2],
@@ -110,6 +117,38 @@ describe("slides helpers", () => {
         slidesDir: slidesDir2,
         slideName: "beta",
         slideDir: join(slidesDir2, "beta"),
+      },
+    ]);
+  });
+
+  it("collectSlides discovers nested slide folders as categories", () => {
+    const slidesDir = join(tempRoot, "slides");
+    mkdirSync(join(slidesDir, "category", "nested"), { recursive: true });
+    mkdirSync(join(slidesDir, "category", "extra"), { recursive: true });
+    mkdirSync(join(slidesDir, "flat"), { recursive: true });
+    writeFileSync(join(slidesDir, "category", "nested", "slides.md"), "# n");
+    writeFileSync(join(slidesDir, "category", "extra", "slides.md"), "# e");
+    writeFileSync(join(slidesDir, "flat", "slides.md"), "# flat");
+
+    const result = collectSlides({ slidesDirs: [slidesDir] }).sort((a, b) =>
+      a.slideDir.localeCompare(b.slideDir),
+    );
+
+    expect(result).toEqual([
+      {
+        slidesDir,
+        slideName: "category/extra",
+        slideDir: join(slidesDir, "category", "extra"),
+      },
+      {
+        slidesDir,
+        slideName: "category/nested",
+        slideDir: join(slidesDir, "category", "nested"),
+      },
+      {
+        slidesDir,
+        slideName: "flat",
+        slideDir: join(slidesDir, "flat"),
       },
     ]);
   });
