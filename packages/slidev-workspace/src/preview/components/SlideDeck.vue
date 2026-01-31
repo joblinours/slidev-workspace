@@ -1,8 +1,8 @@
 <template>
-  <div class="min-h-screen transition-colors">
+  <div class="min-h-screen transition-colors sw-page">
     <div class="min-h-screen sw-layout">
       <aside
-        class="sw-sidebar hidden w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919] lg:flex lg:justify-end"
+        class="sw-sidebar w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
       >
         <div
           class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground w-[270px]"
@@ -88,7 +88,7 @@
               <DrawerTrigger as-child>
                 <button
                   type="button"
-                  class="mb-6 inline-flex items-center justify-center rounded-xl border border-border bg-background p-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+                  class="sw-drawer-trigger mb-6 inline-flex items-center justify-center rounded-xl border border-border bg-background p-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="Open sidebar"
                 >
                   <PanelLeft class="size-5" />
@@ -313,12 +313,10 @@ const filteredSlides = computed(() => {
 <style scoped>
 .sw-layout {
   display: grid;
-  grid-template-columns:
-    minmax(var(--sw-sidebar-col, var(--sw-sidebar-width, 270px)), 1fr)
-    minmax(
-      0,
-      calc(var(--sw-layout-width, 97rem) - var(--sw-sidebar-width, 270px))
-    );
+  width: 100%;
+  max-width: var(--sw-layout-width, 97rem);
+  margin: 0 auto;
+  grid-template-columns: var(--sw-sidebar-width, 270px) minmax(0, 1fr);
   grid-template-rows: auto auto 1fr;
   grid-template-areas:
     "sidebar header"
@@ -328,14 +326,47 @@ const filteredSlides = computed(() => {
 
 .sw-sidebar {
   grid-area: sidebar;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--sw-sidebar-bg);
+  z-index: 0;
+}
+
+.sw-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: -100vw;
+  background: var(--sw-sidebar-bg);
+  z-index: -1;
 }
 
 .sw-header {
   grid-area: header;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .sw-main {
   grid-area: main;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sw-drawer-trigger {
+  display: inline-flex;
+}
+
+.sw-page {
+  --sw-sidebar-bg: #f1f1f1;
+  --sw-main-bg: #f5f5f5;
+  background: var(--sw-main-bg);
+}
+
+:global(.dark) .sw-page {
+  --sw-sidebar-bg: #191919;
+  --sw-main-bg: #121212;
 }
 
 @media (max-width: 1024px) {
@@ -346,6 +377,20 @@ const filteredSlides = computed(() => {
       "sidebar"
       "header"
       "main";
+  }
+
+  .sw-sidebar {
+    display: none;
+  }
+
+  .sw-drawer-trigger {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sw-drawer-trigger {
+    display: none;
   }
 }
 </style>
