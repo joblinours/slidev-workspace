@@ -7,7 +7,9 @@
       <aside
         class="w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#121212]"
       >
-        <div class="sticky top-0 px-6 py-10 text-sidebar-foreground">
+        <div
+          class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground"
+        >
           <div class="px-1 pb-4">
             <h2 class="text-lg font-semibold tracking-tight">
               {{ sidebar.title }}
@@ -56,6 +58,18 @@
               }}</span>
             </button>
           </div>
+
+          <div class="mt-auto flex justify-end pt-6">
+            <button
+              @click="toggleDarkMode"
+              class="p-2 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+              aria-label="Toggle dark mode"
+              type="button"
+            >
+              <Moon v-if="!isDark" class="size-5" />
+              <Sun v-else class="size-5" />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -70,15 +84,7 @@
                 {{ hero.description }}
               </p>
             </div>
-            <button
-              @click="toggleDarkMode"
-              class="self-start p-2 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
-              aria-label="Toggle dark mode"
-              type="button"
-            >
-              <Moon v-if="!isDark" class="size-5" />
-              <Sun v-else class="size-5" />
-            </button>
+            <div class="self-start" />
           </div>
 
           <div
