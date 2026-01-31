@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors">
     <div class="min-h-screen sw-layout">
       <aside
-        class="sw-sidebar w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
+        class="sw-sidebar hidden w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919] lg:flex lg:justify-end"
       >
         <div
           class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground w-[270px]"
@@ -84,6 +84,99 @@
       <header class="sw-header bg-[#F5F5F5] dark:bg-[#121212]">
         <div class="max-w-[900px]">
           <div class="px-6 py-10 lg:px-12">
+            <Drawer direction="left">
+              <DrawerTrigger as-child>
+                <button
+                  type="button"
+                  class="mb-6 inline-flex items-center justify-center rounded-xl border border-border bg-background p-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
+                  aria-label="Open sidebar"
+                >
+                  <PanelLeft class="size-5" />
+                </button>
+              </DrawerTrigger>
+              <DrawerContent
+                class="bg-[#F1F1F1] text-sidebar-foreground dark:bg-[#191919]"
+              >
+                <div
+                  class="flex h-full flex-col px-6 py-8 text-sidebar-foreground"
+                >
+                  <div class="px-1 pb-4">
+                    <h2 class="text-lg font-semibold tracking-tight">
+                      {{ sidebar.title }}
+                    </h2>
+                  </div>
+
+                  <div class="px-1 pb-6">
+                    <div class="relative w-full">
+                      <Input
+                        class="pl-10 h-10 rounded-xl bg-background/70"
+                        placeholder="Search slides..."
+                        v-model="searchTerm"
+                      />
+                      <span
+                        class="absolute start-0 inset-y-0 flex items-center justify-center px-3"
+                      >
+                        <Search class="size-5 text-muted-foreground/50" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="px-1 pb-2">
+                    <h3
+                      class="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Categories
+                    </h3>
+                  </div>
+
+                  <div class="px-0.5 space-y-1 flex-1 overflow-auto">
+                    <button
+                      v-for="category in categoryOptions"
+                      :key="category.name"
+                      type="button"
+                      @click="selectedCategory = category.name"
+                      class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors"
+                      :class="
+                        selectedCategory === category.name
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'hover:bg-sidebar-accent/70 text-sidebar-foreground'
+                      "
+                    >
+                      <span class="truncate">{{ category.name }}</span>
+                      <span class="text-xs text-muted-foreground">{{
+                        category.count
+                      }}</span>
+                    </button>
+                  </div>
+
+                  <div
+                    class="mt-auto flex items-center justify-between gap-3 pt-6"
+                  >
+                    <a
+                      v-if="sidebar.githubUrl"
+                      :href="sidebar.githubUrl"
+                      target="_blank"
+                      rel="noreferrer"
+                      class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+                      aria-label="Open GitHub repository"
+                    >
+                      <Github class="size-5" />
+                    </a>
+                    <div v-else />
+                    <button
+                      @click="toggleDarkMode"
+                      class="p-2 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+                      aria-label="Toggle dark mode"
+                      type="button"
+                    >
+                      <Moon v-if="!isDark" class="size-5" />
+                      <Sun v-else class="size-5" />
+                    </button>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+
             <div
               class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
             >
@@ -139,12 +232,13 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Search, Moon, Sun, Github } from "lucide-vue-next";
+import { Search, Moon, Sun, Github, PanelLeft } from "lucide-vue-next";
 
 import { useSlides } from "../composables/useSlides";
 import { useConfig } from "../composables/useConfig";
 import { useDarkMode } from "../composables/useDarkMode";
 import { Input } from "../components/ui/input";
+import { Drawer, DrawerContent, DrawerTrigger } from "../components/ui/drawer";
 import SlideCard from "./SlideCard.vue";
 
 const searchTerm = ref("");
@@ -234,8 +328,6 @@ const filteredSlides = computed(() => {
 
 .sw-sidebar {
   grid-area: sidebar;
-  display: flex;
-  justify-content: flex-end;
 }
 
 .sw-header {
