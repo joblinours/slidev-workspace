@@ -83,7 +83,7 @@
 
       <header class="sw-header bg-[#F5F5F5] dark:bg-[#121212]">
         <div class="max-w-[900px]">
-          <div class="px-6 py-10 lg:px-12">
+          <div class="px-6 py-8 lg:px-12 lg:py-10">
             <Drawer direction="left">
               <DrawerTrigger as-child>
                 <button
@@ -190,7 +190,7 @@
             </div>
 
             <div
-              class="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+              class="flex flex-col gap-3 md:mt-6 md:flex-row md:items-center md:justify-between"
             >
               <p class="text-sm text-muted-foreground">
                 Found {{ filteredSlides.length }} of {{ slidesCount }} slides
