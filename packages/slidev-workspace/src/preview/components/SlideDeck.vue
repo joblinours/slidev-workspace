@@ -111,9 +111,7 @@
                 </span>
               </template>
             </p>
-            <p class="text-xs text-muted-foreground">
-              Category: <span class="font-medium">{{ selectedCategory }}</span>
-            </p>
+            <div />
           </div>
         </div>
 
