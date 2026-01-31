@@ -1,14 +1,11 @@
 <template>
-  <div class="min-h-screen transition-colors">
-    <div
-      class="min-h-screen lg:grid lg:grid-cols-[minmax(0,1fr)_280px_minmax(0,3fr)_minmax(0,1fr)]"
-    >
-      <div class="hidden bg-[#F1F1F1] dark:bg-[#191919] lg:block" />
+  <div class="min-h-screen transition-colors sw-page">
+    <div class="min-h-screen sw-layout">
       <aside
-        class="w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
+        class="sw-sidebar w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
       >
         <div
-          class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground"
+          class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground w-[270px]"
         >
           <div class="px-1 pb-4">
             <h2 class="text-lg font-semibold tracking-tight">
@@ -84,65 +81,164 @@
         </div>
       </aside>
 
-      <section class="bg-[#F5F5F5] dark:bg-[#121212]">
-        <div class="px-6 py-10 lg:px-12">
-          <div
-            class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
-          >
-            <div>
-              <h1 class="text-3xl font-semibold">{{ hero.title }}</h1>
-              <p class="mt-2 text-sm text-muted-foreground">
-                {{ hero.description }}
-              </p>
-            </div>
-            <div class="self-start" />
-          </div>
+      <header class="sw-header bg-[#F5F5F5] dark:bg-[#121212]">
+        <div class="max-w-[900px]">
+          <div class="px-6 py-8 lg:px-12 lg:py-10">
+            <Drawer direction="left">
+              <DrawerTrigger as-child>
+                <button
+                  type="button"
+                  class="sw-drawer-trigger mb-6 inline-flex items-center justify-center rounded-xl border border-border bg-background p-2 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label="Open sidebar"
+                >
+                  <PanelLeft class="size-5" />
+                </button>
+              </DrawerTrigger>
+              <DrawerContent
+                class="bg-[#F1F1F1] text-sidebar-foreground dark:bg-[#191919]"
+              >
+                <div
+                  class="flex h-full flex-col px-6 py-8 text-sidebar-foreground"
+                >
+                  <div class="px-1 pb-4">
+                    <h2 class="text-lg font-semibold tracking-tight">
+                      {{ sidebar.title }}
+                    </h2>
+                  </div>
 
-          <div
-            class="mt-6 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
-          >
-            <p class="text-sm text-muted-foreground">
-              Found {{ filteredSlides.length }} of {{ slidesCount }} slides
-              <template v-if="searchTerm">
-                <span>
-                  containing "
-                  <span class="font-medium">{{ searchTerm }}</span>
-                  "
-                </span>
-              </template>
-            </p>
-            <div />
+                  <div class="px-1 pb-6">
+                    <div class="relative w-full">
+                      <Input
+                        class="pl-10 h-10 rounded-xl bg-background/70"
+                        placeholder="Search slides..."
+                        v-model="searchTerm"
+                      />
+                      <span
+                        class="absolute start-0 inset-y-0 flex items-center justify-center px-3"
+                      >
+                        <Search class="size-5 text-muted-foreground/50" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="px-1 pb-2">
+                    <h3
+                      class="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+                    >
+                      Categories
+                    </h3>
+                  </div>
+
+                  <div class="px-0.5 space-y-1 flex-1 overflow-auto">
+                    <button
+                      v-for="category in categoryOptions"
+                      :key="category.name"
+                      type="button"
+                      @click="selectedCategory = category.name"
+                      class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors"
+                      :class="
+                        selectedCategory === category.name
+                          ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                          : 'hover:bg-sidebar-accent/70 text-sidebar-foreground'
+                      "
+                    >
+                      <span class="truncate">{{ category.name }}</span>
+                      <span class="text-xs text-muted-foreground">{{
+                        category.count
+                      }}</span>
+                    </button>
+                  </div>
+
+                  <div
+                    class="mt-auto flex items-center justify-between gap-3 pt-6"
+                  >
+                    <a
+                      v-if="sidebar.githubUrl"
+                      :href="sidebar.githubUrl"
+                      target="_blank"
+                      rel="noreferrer"
+                      class="inline-flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+                      aria-label="Open GitHub repository"
+                    >
+                      <Github class="size-5" />
+                    </a>
+                    <div v-else />
+                    <button
+                      @click="toggleDarkMode"
+                      class="p-2 rounded-lg hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors cursor-pointer"
+                      aria-label="Toggle dark mode"
+                      type="button"
+                    >
+                      <Moon v-if="!isDark" class="size-5" />
+                      <Sun v-else class="size-5" />
+                    </button>
+                  </div>
+                </div>
+              </DrawerContent>
+            </Drawer>
+
+            <div
+              class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"
+            >
+              <div>
+                <h1 class="text-3xl font-semibold">{{ hero.title }}</h1>
+                <p class="mt-2 text-sm text-muted-foreground">
+                  {{ hero.description }}
+                </p>
+              </div>
+              <div class="self-start" />
+            </div>
+
+            <div
+              class="flex flex-col gap-3 md:mt-6 md:flex-row md:items-center md:justify-between"
+            >
+              <p class="text-sm text-muted-foreground">
+                Found {{ filteredSlides.length }} of {{ slidesCount }} slides
+                <template v-if="searchTerm">
+                  <span>
+                    containing "
+                    <span class="font-medium">{{ searchTerm }}</span>
+                    "
+                  </span>
+                </template>
+              </p>
+              <div />
+            </div>
           </div>
         </div>
+      </header>
 
-        <div
-          class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
-        >
-          <SlideCard
-            v-for="slide in filteredSlides"
-            :key="slide.url"
-            :title="slide.title"
-            :image="slide.image"
-            :description="slide.description"
-            :url="slide.url"
-            :author="slide.author"
-            :date="slide.date"
-          />
+      <section class="sw-main bg-[#F5F5F5] dark:bg-[#121212]">
+        <div class="max-w-[900px]">
+          <div
+            class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
+          >
+            <SlideCard
+              v-for="slide in filteredSlides"
+              :key="slide.url"
+              :title="slide.title"
+              :image="slide.image"
+              :description="slide.description"
+              :url="slide.url"
+              :author="slide.author"
+              :date="slide.date"
+            />
+          </div>
         </div>
       </section>
-      <div class="hidden bg-[#F5F5F5] dark:bg-[#121212] lg:block" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
-import { Search, Moon, Sun, Github } from "lucide-vue-next";
+import { Search, Moon, Sun, Github, PanelLeft } from "lucide-vue-next";
 
 import { useSlides } from "../composables/useSlides";
 import { useConfig } from "../composables/useConfig";
 import { useDarkMode } from "../composables/useDarkMode";
 import { Input } from "../components/ui/input";
+import { Drawer, DrawerContent, DrawerTrigger } from "../components/ui/drawer";
 import SlideCard from "./SlideCard.vue";
 
 const searchTerm = ref("");
@@ -213,3 +309,88 @@ const filteredSlides = computed(() => {
   );
 });
 </script>
+
+<style scoped>
+.sw-layout {
+  display: grid;
+  width: 100%;
+  max-width: var(--sw-layout-width, 97rem);
+  margin: 0 auto;
+  grid-template-columns: var(--sw-sidebar-width, 270px) minmax(0, 1fr);
+  grid-template-rows: auto auto 1fr;
+  grid-template-areas:
+    "sidebar header"
+    "sidebar main"
+    "sidebar main";
+}
+
+.sw-sidebar {
+  grid-area: sidebar;
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--sw-sidebar-bg);
+  z-index: 0;
+}
+
+.sw-sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  left: -100vw;
+  background: var(--sw-sidebar-bg);
+  z-index: -1;
+}
+
+.sw-header {
+  grid-area: header;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sw-main {
+  grid-area: main;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.sw-drawer-trigger {
+  display: inline-flex;
+}
+
+.sw-page {
+  --sw-sidebar-bg: #f1f1f1;
+  --sw-main-bg: #f5f5f5;
+  background: var(--sw-main-bg);
+}
+
+:global(.dark) .sw-page {
+  --sw-sidebar-bg: #191919;
+  --sw-main-bg: #121212;
+}
+
+@media (max-width: 1024px) {
+  .sw-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "sidebar"
+      "header"
+      "main";
+  }
+
+  .sw-sidebar {
+    display: none;
+  }
+
+  .sw-drawer-trigger {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .sw-drawer-trigger {
+    display: none;
+  }
+}
+</style>
