@@ -27,6 +27,35 @@ export function collectSlides({
       .some((segment) => exclude.includes(segment));
 
   const hasSlidesFile = (dir: string) => existsSync(join(dir, "slides.md"));
+  const readChildDirs = (dir: string) =>
+    readdirSync(dir, { withFileTypes: true })
+      .filter((dirent) => dirent.isDirectory())
+      .map((dirent) => dirent.name)
+      .filter((name) => !exclude.includes(name))
+      .sort((a, b) => a.localeCompare(b));
+
+  const walk = (slidesDir: string, dir: string, relativePath: string) => {
+    if (hasSlidesFile(dir)) {
+      if (relativePath) {
+        entries.push({
+          slidesDir,
+          slideName: relativePath,
+          slideDir: dir,
+        });
+      }
+      return;
+    }
+
+    for (const childName of readChildDirs(dir)) {
+      const childRelative = relativePath
+        ? `${relativePath}/${childName}`
+        : childName;
+      if (isExcluded(childRelative)) {
+        continue;
+      }
+      walk(slidesDir, join(dir, childName), childRelative);
+    }
+  };
 
   for (const slidesDir of slidesDirs) {
     if (!existsSync(slidesDir)) {
@@ -51,36 +80,7 @@ export function collectSlides({
       continue;
     }
 
-    const slideDirs = readdirSync(slidesDir, { withFileTypes: true })
-      .filter((dirent) => dirent.isDirectory())
-      .filter((dirent) => !exclude.includes(dirent.name))
-      .map((dirent) => dirent.name);
-
-    for (const entryName of slideDirs) {
-      const slideDir = join(slidesDir, entryName);
-      if (hasSlidesFile(slideDir)) {
-        entries.push({ slidesDir, slideName: entryName, slideDir });
-        continue;
-      }
-
-      const nestedDirs = readdirSync(slideDir, { withFileTypes: true })
-        .filter((dirent) => dirent.isDirectory())
-        .filter((dirent) => !exclude.includes(dirent.name))
-        .map((dirent) => dirent.name);
-
-      for (const nestedName of nestedDirs) {
-        const nestedSlideDir = join(slideDir, nestedName);
-        if (!hasSlidesFile(nestedSlideDir)) {
-          continue;
-        }
-        const nestedSlideName = `${entryName}/${nestedName}`;
-        entries.push({
-          slidesDir,
-          slideName: nestedSlideName,
-          slideDir: nestedSlideDir,
-        });
-      }
-    }
+    walk(slidesDir, slidesDir, "");
   }
 
   return entries;

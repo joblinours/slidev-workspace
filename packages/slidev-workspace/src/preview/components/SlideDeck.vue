@@ -120,7 +120,7 @@
         >
           <SlideCard
             v-for="slide in filteredSlides"
-            :key="slide.title"
+            :key="slide.url"
             :title="slide.title"
             :image="slide.image"
             :description="slide.description"

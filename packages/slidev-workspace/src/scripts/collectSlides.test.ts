@@ -152,4 +152,46 @@ describe("slides helpers", () => {
       },
     ]);
   });
+
+  it("collectSlides discovers slides at arbitrary nested depth", () => {
+    const slidesDir = join(tempRoot, "slides");
+    mkdirSync(join(slidesDir, "tech", "frontend", "vue"), {
+      recursive: true,
+    });
+    mkdirSync(join(slidesDir, "tech", "backend", "node"), {
+      recursive: true,
+    });
+    mkdirSync(join(slidesDir, "misc"), { recursive: true });
+    writeFileSync(
+      join(slidesDir, "tech", "frontend", "vue", "slides.md"),
+      "# vue",
+    );
+    writeFileSync(
+      join(slidesDir, "tech", "backend", "node", "slides.md"),
+      "# node",
+    );
+    writeFileSync(join(slidesDir, "misc", "slides.md"), "# misc");
+
+    const result = collectSlides({ slidesDirs: [slidesDir] }).sort((a, b) =>
+      a.slideDir.localeCompare(b.slideDir),
+    );
+
+    expect(result).toEqual([
+      {
+        slidesDir,
+        slideName: "misc",
+        slideDir: join(slidesDir, "misc"),
+      },
+      {
+        slidesDir,
+        slideName: "tech/backend/node",
+        slideDir: join(slidesDir, "tech", "backend", "node"),
+      },
+      {
+        slidesDir,
+        slideName: "tech/frontend/vue",
+        slideDir: join(slidesDir, "tech", "frontend", "vue"),
+      },
+    ]);
+  });
 });
