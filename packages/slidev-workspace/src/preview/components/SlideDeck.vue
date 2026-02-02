@@ -2,7 +2,7 @@
   <div class="min-h-screen transition-colors sw-page">
     <div class="min-h-screen sw-layout">
       <aside
-        class="sw-sidebar w-full border-r border-[#E8E8E8] bg-[#F1F1F1] text-sidebar-foreground dark:border-[#212121] dark:bg-[#191919]"
+        class="sw-sidebar w-full border-r border-border text-sidebar-foreground"
       >
         <div
           class="sticky top-0 flex h-screen flex-col px-6 py-10 text-sidebar-foreground w-[270px]"
@@ -81,7 +81,7 @@
         </div>
       </aside>
 
-      <header class="sw-header bg-[#F5F5F5] dark:bg-[#121212]">
+      <header class="sw-header">
         <div class="max-w-[900px]">
           <div class="px-6 py-8 lg:px-12 lg:py-10">
             <Drawer direction="left">
@@ -94,9 +94,7 @@
                   <PanelLeft class="size-5" />
                 </button>
               </DrawerTrigger>
-              <DrawerContent
-                class="bg-[#F1F1F1] text-sidebar-foreground dark:bg-[#191919]"
-              >
+              <DrawerContent class="sw-drawer text-sidebar-foreground">
                 <div
                   class="flex h-full flex-col px-6 py-8 text-sidebar-foreground"
                 >
@@ -208,7 +206,7 @@
         </div>
       </header>
 
-      <section class="sw-main bg-[#F5F5F5] dark:bg-[#121212]">
+      <section class="sw-main">
         <div class="max-w-[900px]">
           <div
             class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
@@ -359,14 +357,19 @@ const filteredSlides = computed(() => {
 }
 
 .sw-page {
-  --sw-sidebar-bg: #f1f1f1;
-  --sw-main-bg: #f5f5f5;
   background: var(--sw-main-bg);
 }
 
-:global(.dark) .sw-page {
+:global(:root) {
+  --sw-sidebar-bg: #f1f1f1;
+}
+
+:global(.dark) {
   --sw-sidebar-bg: #191919;
-  --sw-main-bg: #121212;
+}
+
+:global(.sw-drawer) {
+  background: var(--sw-sidebar-bg);
 }
 
 @media (max-width: 1024px) {
