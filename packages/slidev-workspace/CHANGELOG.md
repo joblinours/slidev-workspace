@@ -1,5 +1,11 @@
 # slidev-workspace
 
+## 0.9.2
+
+### Patch Changes
+
+- fe9a15c: Fix SlideDeck dark mode backgrounds to rely on shared theme variables.
+
 ## 0.9.1
 
 ### Patch Changes
