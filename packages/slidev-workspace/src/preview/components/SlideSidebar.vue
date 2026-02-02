@@ -38,7 +38,7 @@
         class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors"
         :class="
           selectedCategory === category.name
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+            ? 'bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/70 shadow-sm dark:ring-sidebar-border/30'
             : 'hover:bg-sidebar-accent/70 text-sidebar-foreground'
         "
       >
@@ -113,7 +113,7 @@ const containerClass = computed(() =>
 
 const categoriesClass = computed(() =>
   props.variant === "drawer"
-    ? "px-0.5 space-y-1 flex-1 overflow-auto"
-    : "px-0.5 space-y-1 max-h-[60vh] overflow-auto",
+    ? "px-0.5 pb-2 space-y-1 flex-1 overflow-auto"
+    : "px-0.5 pb-2 space-y-1 max-h-[60vh] overflow-auto",
 );
 </script>
