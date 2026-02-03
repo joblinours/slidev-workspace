@@ -1,5 +1,12 @@
 # slidev-workspace
 
+## 0.9.3
+
+### Patch Changes
+
+- 4f34e19: Add a tree view category sidebar to support nested slide categories.
+- 035b987: Add Storybook integration with SlideCard and SlideSidebar components, improve SlideSidebar styling, and refine Storybook configuration and stories.
+
 ## 0.9.2
 
 ### Patch Changes
