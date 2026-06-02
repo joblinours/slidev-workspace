@@ -95,9 +95,9 @@ describe("cli slides helpers", () => {
     await buildSlides();
 
     expect(execSyncMock).toHaveBeenCalledWith(
-      'pnpm --filter "./slides/alpha" run build --base https://example.com/base/alpha/',
+      "pnpm run build --base https://example.com/base/alpha/",
       {
-        cwd: tempRoot,
+        cwd: slideDir,
         stdio: "inherit",
       },
     );

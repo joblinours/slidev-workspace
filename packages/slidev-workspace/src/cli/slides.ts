@@ -30,17 +30,15 @@ export async function buildSlides(names?: string[]) {
     console.log(`📦 Building slide: ${slideName}`);
 
     try {
-      // Use execSync to run pnpm build command for each slide
       const baseUrl = config.baseUrl.endsWith("/")
         ? config.baseUrl
         : config.baseUrl + "/";
-      const subDir = slideDir.startsWith(workspaceCwd)
-        ? slideDir.replace(workspaceCwd, "").replace(/^\//, "")
-        : slideDir;
-      const buildCmd = `pnpm --filter "./${subDir}" run build --base ${baseUrl}${slideName}/`;
+      // Run build directly in the slide directory so Vite's root is set correctly.
+      // This fixes fs.allow issues with absolute-path assets (e.g. /image.svg in public/).
+      const buildCmd = `pnpm run build --base ${baseUrl}${slideName}/`;
       console.log(buildCmd);
       execSync(buildCmd, {
-        cwd: workspaceCwd,
+        cwd: slideDir,
         stdio: "inherit",
       });
       console.log(`✅ Built slide: ${slideName}`);
