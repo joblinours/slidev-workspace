@@ -43,6 +43,7 @@ export interface SlideInfo {
 
 export interface SlideData {
   id: string;
+  path: string;
   title: string;
   url: string;
   presenterUrl: string;

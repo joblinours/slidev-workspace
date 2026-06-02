@@ -19,7 +19,7 @@
       </aside>
 
       <header class="sw-header">
-        <div class="max-w-[900px]">
+        <div class="w-full max-w-[1400px]">
           <div class="px-6 py-8 lg:px-12 lg:py-10">
             <Drawer direction="left">
               <DrawerTrigger as-child>
@@ -80,10 +80,8 @@
       </header>
 
       <section class="sw-main">
-        <div class="max-w-[900px]">
-          <div
-            class="grid grid-cols-1 gap-6 px-6 pb-12 sm:grid-cols-2 xl:grid-cols-3 lg:px-12"
-          >
+        <div class="w-full max-w-[1400px]">
+          <div class="flex flex-col gap-3 px-6 pb-12 lg:px-12">
             <SlideCard
               v-for="slide in filteredSlides"
               :key="slide.id"
@@ -96,11 +94,21 @@
               :date="slide.date"
               :tags="slide.tags"
               :exports="slide.exports"
+              @edit-tags="openTagEditor(slide)"
             />
           </div>
         </div>
       </section>
     </div>
+
+    <!-- Tag editor modal -->
+    <TagEditor
+      v-if="editingSlide"
+      :slide-path="editingSlide.path"
+      :initial-tags="editingSlide.tags"
+      @close="editingSlide = null"
+      @saved="onTagsSaved"
+    />
   </div>
 </template>
 
@@ -114,16 +122,19 @@ import { useDarkMode } from "../composables/useDarkMode";
 import { Drawer, DrawerContent, DrawerTrigger } from "../components/ui/drawer";
 import SlideCard from "./SlideCard.vue";
 import SlideSidebar from "./SlideSidebar.vue";
+import TagEditor from "./TagEditor.vue";
 import type { TagOption } from "./SlideSidebar.vue";
+import type { SlideData } from "../../types/slide";
 
 const searchTerm = ref("");
-const { slides, slidesCount, search } = useSlides();
+const { slides, slidesCount, search, loadSlidesData } = useSlides();
 const { hero, sidebar } = useConfig();
 const { isDark, toggleDarkMode } = useDarkMode();
 
 const uncategorizedLabel = "Uncategorized";
 const selectedCategory = ref("All");
 const selectedTag = ref("All");
+const editingSlide = ref<SlideData | null>(null);
 
 const categoryOptions = computed(() => {
   const counts = new Map<string, number>();
@@ -188,6 +199,15 @@ const filteredSlides = computed(() => {
 
   return result;
 });
+
+function openTagEditor(slide: SlideData) {
+  editingSlide.value = slide;
+}
+
+async function onTagsSaved() {
+  editingSlide.value = null;
+  await loadSlidesData();
+}
 </script>
 
 <style scoped>

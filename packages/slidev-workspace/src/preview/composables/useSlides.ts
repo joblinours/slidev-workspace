@@ -83,9 +83,13 @@ export function useSlides() {
 
       // Build full-text search index
       miniSearch = new MiniSearch<{ id: string }>({
-        fields: ["title", "description", "author", "content"],
+        fields: ["title", "description", "author", "content", "tags"],
         storeFields: ["id"],
-        searchOptions: { boost: { title: 2 }, fuzzy: 0.2 },
+        searchOptions: {
+          boost: { title: 2, tags: 1.5 },
+          fuzzy: 0.2,
+          prefix: true,
+        },
       });
       miniSearch.addAll(
         slidesData.value.map((s) => ({
@@ -95,6 +99,7 @@ export function useSlides() {
             s.frontmatter.info || s.frontmatter.seoMeta?.ogDescription || "",
           author: s.frontmatter.author || "",
           content: s.content,
+          tags: (s.frontmatter.tags || []).join(" "),
         })),
       );
     } catch {
@@ -118,8 +123,8 @@ export function useSlides() {
 
       const slideUrl = IS_DEVELOPMENT ? devServerUrl : slide.path;
       const presenterUrl = IS_DEVELOPMENT
-        ? `${devServerUrl}/?presenter`
-        : `${slide.path.replace(/\/?$/, "/")}?presenter`;
+        ? `${devServerUrl}/presenter/1`
+        : `${slide.path.replace(/\/?$/, "/")}presenter/1`;
 
       const exportBase = IS_DEVELOPMENT
         ? `${devServerUrl}/`
@@ -127,6 +132,7 @@ export function useSlides() {
 
       return {
         id: slide.id,
+        path: slide.path,
         title: slide.frontmatter.title || slide.path,
         url: slideUrl,
         presenterUrl,

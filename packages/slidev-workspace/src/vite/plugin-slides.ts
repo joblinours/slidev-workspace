@@ -1,6 +1,14 @@
 import type { Plugin } from "vite";
-import { watch, readdirSync, cpSync, existsSync } from "fs";
+import {
+  watch,
+  readdirSync,
+  cpSync,
+  existsSync,
+  readFileSync,
+  writeFileSync,
+} from "fs";
 import { join } from "path";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { getAllSlidesFrontmatter } from "../scripts/getSlideFrontmatter";
 import { loadConfig, resolveSlidesDirs } from "../scripts/config";
 import {
@@ -80,6 +88,80 @@ export function slidesPlugin(options: SlidesPluginOptions = {}): Plugin {
       } catch (error) {
         console.error("❌ Failed to start slides dev servers:", error);
       }
+
+      // API middleware: POST /api/slides/tags — update tags in slides.md frontmatter
+      server.middlewares.use((req, res, next) => {
+        if (req.method !== "POST" || req.url !== "/api/slides/tags") {
+          return next();
+        }
+
+        let body = "";
+        req.on("data", (chunk: Buffer) => (body += chunk.toString()));
+        req.on("end", () => {
+          try {
+            const { path: slidePath, tags } = JSON.parse(body) as {
+              path: string;
+              tags: string[];
+            };
+
+            if (typeof slidePath !== "string" || !Array.isArray(tags)) {
+              res.statusCode = 400;
+              res.end("Invalid payload: path and tags required");
+              return;
+            }
+
+            const slides = collectSlides({
+              slidesDirs,
+              exclude: config.exclude,
+            });
+            const entry = slides.find((s) => s.slideName === slidePath);
+
+            if (!entry) {
+              res.statusCode = 404;
+              res.end(`Slide not found: ${slidePath}`);
+              return;
+            }
+
+            const fullPath = join(entry.slideDir, "slides.md");
+            const content = readFileSync(fullPath, "utf8");
+
+            const frontmatterMatch = content.match(
+              /^---\s*\n([\s\S]*?)\n---\s*\n/,
+            );
+            if (!frontmatterMatch) {
+              res.statusCode = 422;
+              res.end("No frontmatter found in slides.md");
+              return;
+            }
+
+            const frontmatter = parseYaml(frontmatterMatch[1]) as Record<
+              string,
+              unknown
+            >;
+            if (tags.length > 0) {
+              frontmatter.tags = tags;
+            } else {
+              delete frontmatter.tags;
+            }
+
+            const newFrontmatter = stringifyYaml(frontmatter, { lineWidth: 0 });
+            const updated = content.replace(
+              frontmatterMatch[0],
+              `---\n${newFrontmatter}---\n`,
+            );
+
+            writeFileSync(fullPath, updated, "utf8");
+
+            res.statusCode = 200;
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify({ ok: true }));
+          } catch (err) {
+            console.error("❌ /api/slides/tags error:", err);
+            res.statusCode = 500;
+            res.end(String(err));
+          }
+        });
+      });
 
       // Watch for changes in all slides directories
       slidesDirs.forEach((slidesDir) => {
