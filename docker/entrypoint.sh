@@ -22,11 +22,12 @@ if [ -d "${SLIDES_CLONE_DIR}/.git" ]; then
   echo "=== Slides repo already cloned, pulling latest ==="
   git -C "${SLIDES_CLONE_DIR}" pull --quiet
 else
-  echo "=== Cloning ${GITHUB_REPO} ==="
+  echo "=== Clonage de ${GITHUB_REPO} ==="
   git clone "${SLIDES_REPO_URL}" "${SLIDES_CLONE_DIR}"
 fi
 
-# Resolve effective slides directory (GITHUB_PATH is optional subfolder)
+# GITHUB_PATH = sous-dossier optionnel dans le repo (parent des présentations)
+# Si vide → on scanne directement la racine du repo cloné
 if [ -n "${GITHUB_PATH}" ]; then
   SLIDES_EFFECTIVE_DIR="${SLIDES_CLONE_DIR}/${GITHUB_PATH}"
 else
@@ -38,9 +39,43 @@ if [ ! -d "${SLIDES_EFFECTIVE_DIR}" ]; then
   exit 1
 fi
 
-# ── 2. Generate slidev-workspace.yaml from env vars ─────────────────────────
-mkdir -p "${WORKSPACE}"
+echo "=== Scanning slides in: ${SLIDES_EFFECTIVE_DIR} ==="
 
+# ── 2. Découverte des dossiers de présentation ───────────────────────────────
+# Un dossier de présentation = contient slides.md + package.json
+SLIDE_PACKAGES=""
+while IFS= read -r slides_md; do
+  dir=$(dirname "${slides_md}")
+  if [ -f "${dir}/package.json" ]; then
+    # Chemin relatif à WORKSPACE pour pnpm-workspace.yaml
+    rel="${dir#${WORKSPACE}/}"
+    SLIDE_PACKAGES="${SLIDE_PACKAGES}  - \"${rel}\"\n"
+    echo "  Found: ${rel}"
+  fi
+done < <(find "${SLIDES_EFFECTIVE_DIR}" -name "slides.md" -not -path "*/node_modules/*")
+
+if [ -z "${SLIDE_PACKAGES}" ]; then
+  echo "⚠️  Aucune présentation trouvée (slides.md + package.json) dans ${SLIDES_EFFECTIVE_DIR}"
+  echo "    Vérifiez que chaque présentation a bien un package.json"
+fi
+
+# ── 3. Générer pnpm-workspace.yaml dans /workspace/ ─────────────────────────
+# Requis pour que 'pnpm --filter' fonctionne dans buildSlides
+cat > "${WORKSPACE}/pnpm-workspace.yaml" <<YAML
+packages:
+$(printf "${SLIDE_PACKAGES}")
+YAML
+
+# Générer un package.json racine minimal pour le workspace pnpm
+cat > "${WORKSPACE}/package.json" <<'JSON'
+{
+  "name": "slidev-workspace-runtime",
+  "version": "1.0.0",
+  "private": true
+}
+JSON
+
+# ── 4. Générer slidev-workspace.yaml ────────────────────────────────────────
 cat > "${WORKSPACE}/slidev-workspace.yaml" <<YAML
 slidesDir:
   - "${SLIDES_EFFECTIVE_DIR}"
@@ -53,32 +88,29 @@ sidebar:
   title: "${SLIDES_TITLE:-Mes Présentations}"
 YAML
 
-echo "=== Config generated at ${WORKSPACE}/slidev-workspace.yaml ==="
+echo "=== Config générée ==="
 
-# ── 3. Install dependencies for each slide ──────────────────────────────────
-echo "=== Installing slide dependencies ==="
-find "${SLIDES_EFFECTIVE_DIR}" -name "package.json" -not -path "*/node_modules/*" | while read -r pkg; do
-  dir=$(dirname "${pkg}")
-  echo "  pnpm install in ${dir}"
-  pnpm install --dir "${dir}" --no-frozen-lockfile 2>&1 | tail -5
-done
+# ── 5. Installer les dépendances (workspace pnpm) ───────────────────────────
+echo "=== Installation des dépendances ==="
+# CI=true évite le prompt interactif de suppression de node_modules (pas de TTY en Docker)
+CI=true pnpm install --dir "${WORKSPACE}" --no-frozen-lockfile 2>&1 | tail -10
 
-# ── 4. Build all presentations ───────────────────────────────────────────────
-echo "=== Building all presentations ==="
+# ── 6. Build des présentations ───────────────────────────────────────────────
+echo "=== Build de toutes les présentations ==="
 SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build
 
-# ── 5. Export PDF/PPTX ──────────────────────────────────────────────────────
-echo "=== Exporting PDF/PPTX ==="
-SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export || echo "⚠️ Some exports may have failed (non-fatal)"
+# ── 7. Export PDF/PPTX ──────────────────────────────────────────────────────
+echo "=== Export PDF/PPTX ==="
+SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export || echo "⚠️ Certains exports ont échoué (non fatal)"
 
-# ── 6. Configure Nginx ──────────────────────────────────────────────────────
-echo "=== Configuring Nginx ==="
+# ── 8. Configurer Nginx ──────────────────────────────────────────────────────
+echo "=== Configuration Nginx ==="
 export BASE_URL="${BASE_URL:-/}"
 envsubst '${BASE_URL}' < /app/docker/nginx.conf.template > /etc/nginx/sites-enabled/slidev-workspace.conf
 nginx -t
 
-# ── 7. Start git pull cron in background ────────────────────────────────────
-echo "=== Starting git pull cron (every 30s) ==="
+# ── 9. Démarrer le cron git pull en arrière-plan ────────────────────────────
+echo "=== Démarrage du cron git pull (toutes les 30s) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
 WORKSPACE="${WORKSPACE}" \
 SLIDES_REPO_URL="${SLIDES_REPO_URL}" \
@@ -86,6 +118,6 @@ BASE_URL="${BASE_URL:-/}" \
 SLIDES_TITLE="${SLIDES_TITLE:-Mes Présentations}" \
   /app/docker/cron-pull.sh &
 
-# ── 8. Start Nginx ──────────────────────────────────────────────────────────
-echo "=== Slidev Workspace is ready on port 8084 ==="
+# ── 10. Démarrer Nginx ──────────────────────────────────────────────────────
+echo "=== Slidev Workspace prêt sur le port 8084 ==="
 exec nginx -g "daemon off;"

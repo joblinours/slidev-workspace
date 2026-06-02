@@ -7,7 +7,10 @@ export function parsePortOption(value: string) {
 }
 
 export function setWorkspaceCwd() {
-  process.env.SLIDEV_WORKSPACE_CWD = process.cwd();
+  // Don't override if already set (e.g. via Docker entrypoint env var)
+  if (!process.env.SLIDEV_WORKSPACE_CWD) {
+    process.env.SLIDEV_WORKSPACE_CWD = process.cwd();
+  }
 }
 
 export function parseNames(names?: string[]) {
