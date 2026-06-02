@@ -1,18 +1,20 @@
 services:
   slidev-workspace:
-    build: .
+    image: ghcr.io/joblinours/slidev-workspace:latest
+    # Pour builder l'image localement à la place : commentez la ligne image et décommentez build
+    # build: .
     ports:
       - "8084:8084"
     environment:
-      # GitHub repo to clone (format: username/repo-name)
+      # GitHub repo contenant vos présentations Slidev (format : username/repo-name)
       - GITHUB_REPO=${GITHUB_REPO}
-      # Optional: path within the repo that contains slide folders (leave empty for root)
+      # Optionnel : sous-dossier dans le repo où se trouvent les slides (vide = racine)
       - GITHUB_PATH=${GITHUB_PATH:-}
-      # Personal Access Token for private repos
+      # Personal Access Token pour les repos privés (scope : repo read)
       - GITHUB_PAT=${GITHUB_PAT}
-      # Base URL — use / for direct access, /subpath/ when behind a reverse proxy
+      # URL de base — utilisez / pour accès direct, /subpath/ derrière un reverse proxy
       - BASE_URL=${BASE_URL:-/}
-      # Workspace title displayed in the UI
+      # Titre affiché dans l'interface
       - SLIDES_TITLE=${SLIDES_TITLE:-Mes Présentations}
     volumes:
       - slides-data:/workspace/slides

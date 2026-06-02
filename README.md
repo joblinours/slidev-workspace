@@ -1,69 +1,157 @@
 # Slidev Workspace
 
-[![npm version](https://badge.fury.io/js/slidev-workspace.svg)](https://badge.fury.io/js/slidev-workspace)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+Interface web unifiée pour gérer et consulter toutes vos présentations [Slidev](https://sli.dev), déployée via Docker et auto-synchronisée depuis un dépôt GitHub.
 
-Slidev Workspace is a specialized command-line tool designed to manage and showcase multiple [Slidev](https://sli.dev) presentations. It provides a unified web interface to browse, search, and access Slidev presentations distributed across different directories.
+> Fork de [leochiu-a/slidev-workspace](https://github.com/leochiu-a/slidev-workspace) avec support Docker, recherche plein-texte, tags, mode présentateur et export PDF/PPTX.
 
-- **[Slidev Workspace Starter](https://github.com/leochiu-a/slidev-workspace-starter)** - Ready-to-use template
-- **[Live Demo](https://leochiu-a.github.io/slidev-workspace-starter/)** - See it in action
-- **[Documentation](https://leochiu-a.github.io/slidev-workspace/)**
+## Fonctionnalités
 
-## Features
+- **Indexation automatique** — découverte récursive de toutes les présentations dans le repo
+- **Recherche plein-texte** — recherche dans les titres, descriptions, auteurs et contenu markdown
+- **Tags & filtres** — ajoutez des tags dans le frontmatter de vos slides, filtrez par tag dans la sidebar
+- **Mode présentateur** — bouton dédié sur chaque carte pour ouvrir la vue présentateur Slidev
+- **Export PDF/PPTX** — génération automatique au démarrage, téléchargement depuis l'interface
+- **Synchronisation GitHub** — `git pull` toutes les 30 secondes, rebuild incrémental des slides modifiées
+- **Reverse proxy ready** — `BASE_URL` configurable pour un déploiement derrière Nginx/Traefik
 
-✨ **Multi-presentation management** - Organize multiple Slidev presentations in one workspace  
-📱 **Responsive interface** - Clean, modern UI for presentation management  
-🔧 **Easy configuration** - Simple YAML-based configuration  
-📦 **Build & Deploy** - Built-in commands for production builds  
-🎨 **Thumbnail previews** - Visual presentation previews in the workspace
+---
 
-## Usage
+## Déploiement rapide
 
-Slidev Workspace provides two flexible ways to work with your presentations:
-
-### Built-in Preview Interface
-
-Use the command-line tool for an out-of-the-box solution:
+### 1. Copier le fichier de configuration
 
 ```bash
-slidev-workspace preview
+cp .env.example .env
 ```
 
-This launches a responsive web interface with presentation management, search functionality, and thumbnail previews - perfect for users who want to get started quickly without building custom UI.
+Renseigner les variables dans `.env` :
 
-### Content API
-
-For developers who need custom UI integration, access slide data programmatically:
-
-```typescript
-import { useSlides } from "slidev-workspace";
-
-const { slides } = useSlides();
+```env
+GITHUB_REPO=votre-username/votre-repo-slides
+GITHUB_PATH=                          # sous-dossier optionnel dans le repo
+GITHUB_PAT=ghp_xxxxxxxxxxxxxxxxxxxx   # token PAT avec accès lecture repo
+BASE_URL=/                            # / en accès direct, /slides/ derrière un proxy
+SLIDES_TITLE=Mes Présentations
 ```
 
-The `useSlides` composable returns frontmatter data from all discovered presentations, enabling you to build entirely custom interfaces while leveraging Slidev Workspace's presentation discovery and parsing capabilities.
-
-## Quick Start
-
-Get started in 5 minutes! See our [Quick Start Guide](https://leochiu-a.github.io/slidev-workspace/getting-started/quick-start.html).
-
-## Migrate from a Single Slidev Project
-
-Already have a single Slidev project and want to turn it into a workspace? Install the migration skill for [Claude Code](https://claude.ai/code):
+### 2. Lancer le container
 
 ```bash
-npx skills add https://github.com/leochiu-a/slidev-workspace/tree/main/.claude/skills/slidev-migrate
+docker compose up -d
 ```
 
-Then ask Claude: **"migrate my slidev project to a workspace"** — it will scaffold the workspace structure, move your files, and configure everything automatically.
+L'interface est disponible sur **http://localhost:8084**.
 
-## Documentation
+Au premier démarrage, le container :
 
-- 📚 [Quick Start Guide](https://leochiu-a.github.io/slidev-workspace/getting-started/quick-start.html) - Get up and running in 5 minutes
-- 🚀 [Deployment Guide](https://leochiu-a.github.io/slidev-workspace/getting-started/deploy.html) - Deploy to GitHub Pages
+1. Clone votre repo de slides
+2. Installe les dépendances de chaque présentation
+3. Build toutes les slides en statique
+4. Génère les exports PDF/PPTX
+5. Démarre Nginx sur le port 8084
 
-## Related Projects
+> Le premier démarrage peut prendre plusieurs minutes selon le nombre de slides.
 
-- [Slidev](https://sli.dev) - Presentation slides for developers
-- [Vue.js](https://vuejs.org) - The progressive JavaScript framework
-- [Vite](https://vitejs.dev) - Next generation frontend tooling
+---
+
+## Structure attendue du repo de slides
+
+Chaque présentation doit être un projet Slidev indépendant dans son propre dossier :
+
+```
+mon-repo-slides/
+├── presentation-1/
+│   ├── slides.md
+│   ├── package.json       # doit avoir un script "build": "slidev build"
+│   └── ...
+├── presentation-2/
+│   ├── slides.md
+│   ├── package.json
+│   └── ...
+└── ...
+```
+
+### Ajouter des tags à une présentation
+
+Dans le frontmatter de `slides.md` :
+
+```yaml
+---
+title: Ma Présentation
+author: Lucas Joblin
+date: 2025-06-01
+tags:
+  - frontend
+  - architecture
+  - design
+---
+```
+
+---
+
+## Variables d'environnement
+
+| Variable       | Requis | Défaut              | Description                          |
+| -------------- | ------ | ------------------- | ------------------------------------ |
+| `GITHUB_REPO`  | ✅     | —                   | Repo GitHub (`username/repo`)        |
+| `GITHUB_PAT`   | ✅     | —                   | Personal Access Token (scope `repo`) |
+| `GITHUB_PATH`  | ❌     | racine              | Sous-dossier dans le repo            |
+| `BASE_URL`     | ❌     | `/`                 | Chemin de base (ex: `/slides/`)      |
+| `SLIDES_TITLE` | ❌     | `Mes Présentations` | Titre affiché dans la sidebar        |
+
+---
+
+## Déploiement derrière un reverse proxy
+
+Définir `BASE_URL=/slides/` dans `.env` (ou directement dans le `docker-compose.yml` sur Portainer).
+
+Exemple de configuration Nginx côté hôte :
+
+```nginx
+location /slides/ {
+    proxy_pass http://localhost:8084/slides/;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+}
+```
+
+Aucune configuration supplémentaire n'est nécessaire dans le container — Nginx est déjà configuré pour le sous-chemin.
+
+---
+
+## Image Docker
+
+L'image est publiée automatiquement sur GitHub Container Registry à chaque push sur `main` ou `dev` :
+
+```
+ghcr.io/joblinours/slidev-workspace:latest   # branche main
+ghcr.io/joblinours/slidev-workspace:dev      # branche dev
+ghcr.io/joblinours/slidev-workspace:sha-abc123
+```
+
+Pour forcer le pull de la dernière version :
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+---
+
+## Développement local
+
+```bash
+# Installer les dépendances
+pnpm install
+
+# Builder le package
+pnpm build
+
+# Lancer les tests
+pnpm test
+```
+
+---
+
+## Licence
+
+MIT — basé sur [leochiu-a/slidev-workspace](https://github.com/leochiu-a/slidev-workspace)
