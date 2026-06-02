@@ -43,8 +43,11 @@ export async function buildSlides(names?: string[]) {
       });
       console.log(`✅ Built slide: ${slideName}`);
     } catch (error) {
-      console.error(`❌ Failed to build slide ${slideName}:`, error);
-      process.exit(1);
+      console.error(
+        `❌ Failed to build slide ${slideName}:`,
+        (error as Error).message,
+      );
+      console.warn(`⚠️ Skipping ${slideName} — continuing with other slides.`);
     }
   }
 }
