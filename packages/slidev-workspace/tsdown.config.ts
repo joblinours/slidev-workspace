@@ -24,4 +24,11 @@ export default defineConfig([
     outDir: "dist",
     external: ["fs", "path", "url", "yaml", "slidev:content"],
   },
+  // Production API server
+  {
+    entry: ["./src/scripts/api-server.ts"],
+    platform: "node",
+    outDir: "dist",
+    external: ["fs", "path", "http", "url", "yaml"],
+  },
 ]);

@@ -8,47 +8,22 @@
         class="relative overflow-hidden rounded-l-xl flex-shrink-0"
         style="width: 240px; height: 135px"
       >
-        <!-- Dev mode: iframe showing actual slide -->
-        <template v-if="isDev">
-          <div class="w-full h-full bg-muted overflow-hidden">
-            <iframe
-              :src="url"
-              sandbox="allow-same-origin allow-scripts"
-              tabindex="-1"
-              class="pointer-events-none border-0"
-              style="
-                width: 1280px;
-                height: 720px;
-                transform: scale(0.1875);
-                transform-origin: top left;
-              "
-            />
-          </div>
-        </template>
-
-        <!-- Prod mode: og-image / background -->
-        <template v-else>
-          <Skeleton
-            v-if="isLoading && image"
-            class="w-full h-full rounded-none"
+        <!-- Live iframe thumbnail (dev: separate port, prod: same-origin path) -->
+        <div class="w-full h-full bg-muted overflow-hidden">
+          <iframe
+            :src="url"
+            sandbox="allow-same-origin allow-scripts"
+            loading="lazy"
+            tabindex="-1"
+            class="pointer-events-none border-0"
+            style="
+              width: 1280px;
+              height: 720px;
+              transform: scale(0.1875);
+              transform-origin: top left;
+            "
           />
-          <img
-            v-if="image"
-            ref="imageRef"
-            v-show="!isLoading"
-            :src="image"
-            :alt="title"
-            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-            @load="onImageLoad"
-            @error="onImageError"
-          />
-          <div
-            v-if="!image"
-            class="w-full h-full bg-muted flex items-center justify-center"
-          >
-            <span class="text-muted-foreground text-xs">No Image</span>
-          </div>
-        </template>
+        </div>
       </div>
 
       <!-- Content -->
@@ -144,16 +119,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useTemplateRef } from "vue";
 import { Calendar, User, Monitor, FileDown, Tag } from "lucide-vue-next";
-
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { IS_DEVELOPMENT } from "@/constants/env";
 
-const isDev = IS_DEVELOPMENT;
-
-const props = defineProps<{
+defineProps<{
   title: string;
   image?: string;
   description?: string;
@@ -166,28 +135,4 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ "edit-tags": [] }>();
-
-const imageRef = useTemplateRef<HTMLImageElement>("imageRef");
-const isLoading = ref(true);
-const retryCount = ref(0);
-
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 1000;
-
-const onImageLoad = () => {
-  isLoading.value = false;
-};
-
-const onImageError = () => {
-  if (retryCount.value < MAX_RETRIES) {
-    retryCount.value++;
-    setTimeout(() => {
-      if (imageRef.value && props.image) {
-        imageRef.value.src = props.image;
-      }
-    }, RETRY_DELAY);
-  } else {
-    isLoading.value = false;
-  }
-};
 </script>

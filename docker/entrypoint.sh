@@ -92,6 +92,11 @@ BASE_URL="${BASE_URL:-/}" \
 SLIDES_TITLE="${SLIDES_TITLE:-Mes Présentations}" \
   /app/docker/cron-pull.sh &
 
-# ── 8. Démarrer Nginx ──────────────────────────────────────────────────────
+# ── 8. Démarrer le serveur API (tags) en arrière-plan ──────────────────────
+echo "=== Démarrage du serveur API (port 3099) ==="
+SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
+  node /app/packages/slidev-workspace/dist/api-server.js &
+
+# ── 9. Démarrer Nginx ──────────────────────────────────────────────────────
 echo "=== Slidev Workspace prêt sur le port 8084 ==="
 exec nginx -g "daemon off;"

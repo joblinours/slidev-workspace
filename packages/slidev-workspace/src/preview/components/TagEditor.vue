@@ -26,14 +26,6 @@
         </button>
       </div>
 
-      <!-- Production warning -->
-      <div
-        v-if="!isDev"
-        class="mb-4 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-xs text-amber-700 dark:text-amber-400"
-      >
-        La modification de tags est disponible uniquement en mode développement.
-      </div>
-
       <!-- Current tags -->
       <div class="mb-3">
         <p class="text-xs text-muted-foreground mb-2">Tags actuels</p>
@@ -45,7 +37,6 @@
           >
             {{ tag }}
             <button
-              v-if="isDev"
               type="button"
               class="hover:text-destructive transition-colors"
               @click="removeTag(tag)"
@@ -59,7 +50,7 @@
       </div>
 
       <!-- Add tag input -->
-      <div v-if="isDev" class="mb-5">
+      <div class="mb-5">
         <p class="text-xs text-muted-foreground mb-2">Ajouter un tag</p>
         <div class="flex gap-2">
           <input
@@ -95,7 +86,6 @@
           Annuler
         </button>
         <button
-          v-if="isDev"
           type="button"
           :disabled="isSaving"
           class="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -111,9 +101,6 @@
 <script setup lang="ts">
 import { ref, nextTick, useTemplateRef } from "vue";
 import { X, Plus } from "lucide-vue-next";
-import { IS_DEVELOPMENT } from "@/constants/env";
-
-const isDev = IS_DEVELOPMENT;
 
 const props = defineProps<{
   slidePath: string;
