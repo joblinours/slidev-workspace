@@ -2,38 +2,31 @@ server {
     listen 8084;
     server_name _;
 
-    # Security headers
+    root /workspace/dist;
+    index index.html;
+
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
 
-    # Long cache for hashed static assets
+    # Static assets — cache long pour les fichiers hachés
     location ~* \.(js|css|woff2?|png|jpg|gif|svg|ico)(\?.*)?$ {
-        root /workspace/dist;
         expires 7d;
         add_header Cache-Control "public, immutable";
         try_files $uri =404;
     }
 
-    # Each slide's SPA — HTML5 history mode fallback
-    # Must come before the workspace root location
-    location ~ ^${BASE_URL}([^/]+)/(.*)$ {
-        alias /workspace/dist/$1/;
-        try_files $uri $uri/ /workspace/dist/$1/index.html;
+    # Slide sub-apps : SPA routing
+    # /slidev/3 → cherche /slidev/3, sinon → /slidev/index.html, sinon → 404
+    location ~ ^/([^/]+)/(.+)$ {
+        try_files $uri /$1/index.html =404;
     }
 
-    # Workspace root — serve the index UI with SPA fallback
-    location ${BASE_URL} {
-        alias /workspace/dist/;
-        try_files $uri $uri/ /workspace/dist/index.html;
+    # Workspace et tout le reste : SPA fallback → /index.html
+    location / {
+        try_files $uri $uri/ /index.html;
     }
 
     gzip on;
     gzip_vary on;
-    gzip_types
-        text/plain
-        text/css
-        text/javascript
-        application/javascript
-        application/json
-        image/svg+xml;
+    gzip_types text/plain text/css text/javascript application/javascript application/json image/svg+xml;
 }
