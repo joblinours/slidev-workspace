@@ -3,6 +3,7 @@
 import { Command } from "commander";
 
 import { exportOgImages } from "./cli/slides";
+import { exportSlides } from "./cli/export";
 import { runViteBuild, runVitePreview } from "./cli/vite";
 import { parseNames, parsePortOption, setWorkspaceCwd } from "./cli/utils";
 
@@ -78,6 +79,20 @@ async function main() {
     .action(async () => {
       setWorkspaceCwd();
       await exportOgImages();
+    });
+
+  program
+    .command("export")
+    .description(
+      "Export slides to PDF and PPTX (requires Playwright/Chromium). Outputs to each slide's dist/ directory.",
+    )
+    .argument(
+      "[names...]",
+      "Optional slide folder names (comma-separated or space-separated)",
+    )
+    .action(async (names: string[]) => {
+      setWorkspaceCwd();
+      await exportSlides(parseNames(names));
     });
 
   program

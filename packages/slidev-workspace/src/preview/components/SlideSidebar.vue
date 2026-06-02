@@ -59,6 +59,49 @@
       />
     </div>
 
+    <!-- Tags filter -->
+    <template v-if="tags && tags.length > 0">
+      <div class="px-1 pb-2 pt-4">
+        <h3
+          class="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+        >
+          Tags
+        </h3>
+      </div>
+
+      <div class="px-0.5 pb-2 space-y-1 max-h-[30vh] overflow-auto">
+        <button
+          type="button"
+          @click="selectedTag = 'All'"
+          class="mb-1 w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors"
+          :class="
+            selectedTag === 'All'
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/70 dark:ring-sidebar-border/30'
+              : 'hover:bg-sidebar-accent/70 text-sidebar-foreground'
+          "
+        >
+          <span class="truncate">All tags</span>
+        </button>
+        <button
+          v-for="tag in tags"
+          :key="tag.name"
+          type="button"
+          @click="selectedTag = tag.name"
+          class="w-full flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition-colors"
+          :class="
+            selectedTag === tag.name
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground ring-1 ring-sidebar-border/70 dark:ring-sidebar-border/30'
+              : 'hover:bg-sidebar-accent/70 text-sidebar-foreground'
+          "
+        >
+          <span class="truncate">{{ tag.name }}</span>
+          <span class="ml-auto text-xs text-muted-foreground">{{
+            tag.count
+          }}</span>
+        </button>
+      </div>
+    </template>
+
     <div class="mt-auto flex items-center justify-between gap-3 pt-6">
       <a
         v-if="githubUrl"
@@ -95,11 +138,17 @@ import {
 } from "../lib/categoryTree";
 import TreeView from "./TreeView.vue";
 
+export interface TagOption {
+  name: string;
+  count: number;
+}
+
 const props = withDefaults(
   defineProps<{
     title: string;
     githubUrl?: string;
     categories: CategoryNodeInput[];
+    tags?: TagOption[];
     isDark: boolean;
     variant?: "desktop" | "drawer";
   }>(),
@@ -116,6 +165,7 @@ const searchTerm = defineModel<string>("searchTerm", { default: "" });
 const selectedCategory = defineModel<string>("selectedCategory", {
   default: "All",
 });
+const selectedTag = defineModel<string>("selectedTag", { default: "All" });
 
 const ALL_CATEGORY_LABEL = "All";
 
@@ -132,7 +182,7 @@ const containerClass = computed(() =>
 const categoriesClass = computed(() =>
   props.variant === "drawer"
     ? "px-0.5 pb-2 space-y-1 flex-1 overflow-auto"
-    : "px-0.5 pb-2 space-y-1 max-h-[60vh] overflow-auto",
+    : "px-0.5 pb-2 space-y-1 max-h-[40vh] overflow-auto",
 );
 
 const categoryTree = computed(() =>

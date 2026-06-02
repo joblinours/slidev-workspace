@@ -1,9 +1,8 @@
 <template>
-  <a :href="url" target="_blank">
-    <Card
-      class="group hover:shadow-lg transition-all duration-200 cursor-pointer"
-      @click="$emit('click')"
-    >
+  <Card
+    class="group hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col"
+  >
+    <a :href="url" target="_blank" class="flex-1 flex flex-col">
       <div class="relative overflow-hidden rounded-t-lg">
         <Skeleton
           v-if="isLoading && image"
@@ -35,10 +34,21 @@
         </CardTitle>
       </CardHeader>
 
-      <CardContent class="space-y-3">
-        <CardDescription class="line-clamp-3 text-sm h-[40px]">{{
-          description
-        }}</CardDescription>
+      <CardContent class="space-y-3 flex-1">
+        <CardDescription class="line-clamp-3 text-sm h-[40px]">
+          {{ description }}
+        </CardDescription>
+
+        <!-- Tags -->
+        <div v-if="tags && tags.length > 0" class="flex flex-wrap gap-1">
+          <span
+            v-for="tag in tags"
+            :key="tag"
+            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary"
+          >
+            {{ tag }}
+          </span>
+        </div>
 
         <div
           class="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t"
@@ -53,13 +63,49 @@
           </div>
         </div>
       </CardContent>
-    </Card>
-  </a>
+    </a>
+
+    <!-- Actions: Presenter mode + Exports -->
+    <div class="px-6 pb-4 pt-0 flex items-center gap-2 flex-wrap border-t mt-2">
+      <a
+        :href="presenterUrl"
+        target="_blank"
+        class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
+        title="Open in presenter mode"
+        @click.stop
+      >
+        <Monitor class="h-3 w-3" />
+        Présenter
+      </a>
+      <a
+        v-if="exports?.pdf"
+        :href="exports.pdf"
+        download
+        class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
+        title="Download PDF"
+        @click.stop
+      >
+        <FileDown class="h-3 w-3" />
+        PDF
+      </a>
+      <a
+        v-if="exports?.pptx"
+        :href="exports.pptx"
+        download
+        class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
+        title="Download PPTX"
+        @click.stop
+      >
+        <FileDown class="h-3 w-3" />
+        PPTX
+      </a>
+    </div>
+  </Card>
 </template>
 
 <script setup lang="ts">
 import { ref, useTemplateRef } from "vue";
-import { Calendar, User } from "lucide-vue-next";
+import { Calendar, User, Monitor, FileDown } from "lucide-vue-next";
 
 import {
   Card,
@@ -75,20 +121,21 @@ const props = defineProps<{
   image?: string;
   description?: string;
   url: string;
+  presenterUrl: string;
   author: string;
   date: string;
+  tags?: string[];
+  exports?: { pdf?: string; pptx?: string };
 }>();
 
-defineEmits<{
-  click: [];
-}>();
+defineEmits<{ click: [] }>();
 
 const imageRef = useTemplateRef<HTMLImageElement>("imageRef");
 const isLoading = ref(true);
 const retryCount = ref(0);
 
 const MAX_RETRIES = 5;
-const RETRY_DELAY = 1000; // 1 second
+const RETRY_DELAY = 1000;
 
 const onImageLoad = () => {
   isLoading.value = false;
@@ -97,7 +144,6 @@ const onImageLoad = () => {
 const onImageError = () => {
   if (retryCount.value < MAX_RETRIES) {
     retryCount.value++;
-
     setTimeout(() => {
       if (imageRef.value && props.image) {
         imageRef.value.src = props.image;

@@ -8,10 +8,12 @@
           :title="sidebar.title"
           :github-url="sidebar.githubUrl"
           :categories="categoryOptions"
+          :tags="tagOptions"
           :is-dark="isDark"
           variant="desktop"
           v-model:search-term="searchTerm"
           v-model:selected-category="selectedCategory"
+          v-model:selected-tag="selectedTag"
           @toggle-dark="toggleDarkMode"
         />
       </aside>
@@ -34,10 +36,12 @@
                   :title="sidebar.title"
                   :github-url="sidebar.githubUrl"
                   :categories="categoryOptions"
+                  :tags="tagOptions"
                   :is-dark="isDark"
                   variant="drawer"
                   v-model:search-term="searchTerm"
                   v-model:selected-category="selectedCategory"
+                  v-model:selected-tag="selectedTag"
                   @toggle-dark="toggleDarkMode"
                 />
               </DrawerContent>
@@ -61,11 +65,12 @@
               <p class="text-sm text-muted-foreground">
                 Found {{ filteredSlides.length }} of {{ slidesCount }} slides
                 <template v-if="searchTerm">
-                  <span>
-                    containing "
-                    <span class="font-medium">{{ searchTerm }}</span>
-                    "
-                  </span>
+                  <span
+                    >containing "<span class="font-medium">{{
+                      searchTerm
+                    }}</span
+                    >"</span
+                  >
                 </template>
               </p>
               <div />
@@ -81,13 +86,16 @@
           >
             <SlideCard
               v-for="slide in filteredSlides"
-              :key="slide.url"
+              :key="slide.id"
               :title="slide.title"
               :image="slide.image"
               :description="slide.description"
               :url="slide.url"
+              :presenter-url="slide.presenterUrl"
               :author="slide.author"
               :date="slide.date"
+              :tags="slide.tags"
+              :exports="slide.exports"
             />
           </div>
         </div>
@@ -106,14 +114,16 @@ import { useDarkMode } from "../composables/useDarkMode";
 import { Drawer, DrawerContent, DrawerTrigger } from "../components/ui/drawer";
 import SlideCard from "./SlideCard.vue";
 import SlideSidebar from "./SlideSidebar.vue";
+import type { TagOption } from "./SlideSidebar.vue";
 
 const searchTerm = ref("");
-const { slides, slidesCount } = useSlides();
+const { slides, slidesCount, search } = useSlides();
 const { hero, sidebar } = useConfig();
 const { isDark, toggleDarkMode } = useDarkMode();
 
 const uncategorizedLabel = "Uncategorized";
 const selectedCategory = ref("All");
+const selectedTag = ref("All");
 
 const categoryOptions = computed(() => {
   const counts = new Map<string, number>();
@@ -128,30 +138,31 @@ const categoryOptions = computed(() => {
   }));
 
   if (categories.length <= 1) {
-    return [
-      {
-        name: "All",
-        count: slidesCount.value,
-      },
-    ];
+    return [{ name: "All", count: slidesCount.value }];
   }
 
-  return [
-    {
-      name: "All",
-      count: slidesCount.value,
-    },
-    ...categories,
-  ];
+  return [{ name: "All", count: slidesCount.value }, ...categories];
+});
+
+const tagOptions = computed<TagOption[]>(() => {
+  const counts = new Map<string, number>();
+  slides.value.forEach((slide) => {
+    (slide.tags || []).forEach((tag) => {
+      counts.set(tag, (counts.get(tag) || 0) + 1);
+    });
+  });
+  if (counts.size === 0) return [];
+  return Array.from(counts.entries()).map(([name, count]) => ({ name, count }));
 });
 
 watch(categoryOptions, (next) => {
-  const hasSelected = next.some(
-    (category) => category.name === selectedCategory.value,
-  );
-  if (!hasSelected) {
-    selectedCategory.value = "All";
-  }
+  const hasSelected = next.some((c) => c.name === selectedCategory.value);
+  if (!hasSelected) selectedCategory.value = "All";
+});
+
+watch(tagOptions, (next) => {
+  const hasSelected = next.some((t) => t.name === selectedTag.value);
+  if (!hasSelected) selectedTag.value = "All";
 });
 
 const filteredSlides = computed(() => {
@@ -164,15 +175,18 @@ const filteredSlides = computed(() => {
     );
   }
 
-  if (!searchTerm.value) return result;
-  return result.filter(
-    (slide) =>
-      slide.title.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
-      slide.description
-        .toLowerCase()
-        .includes(searchTerm.value.toLowerCase()) ||
-      slide.author.toLowerCase().includes(searchTerm.value.toLowerCase()),
-  );
+  if (selectedTag.value !== "All") {
+    result = result.filter((slide) =>
+      (slide.tags || []).includes(selectedTag.value),
+    );
+  }
+
+  if (searchTerm.value) {
+    const hitIds = new Set(search(searchTerm.value));
+    result = result.filter((slide) => hitIds.has(slide.id));
+  }
+
+  return result;
 });
 </script>
 

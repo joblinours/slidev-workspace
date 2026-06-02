@@ -1,0 +1,44 @@
+server {
+    listen 8084;
+    server_name _;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+
+    # Long cache for hashed static assets
+    location ~* \.(js|css|woff2?|png|jpg|gif|svg|ico)(\?.*)?$ {
+        root /workspace/dist;
+        expires 7d;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+
+    # Each slide's SPA — HTML5 history mode fallback
+    # Must come before the workspace root location
+    location ~ ^${BASE_URL}([^/]+)/(.*)$ {
+        alias /workspace/dist/$1/;
+        try_files $uri $uri/ /workspace/dist/$1/index.html;
+    }
+
+    # Workspace root — serve the index UI with SPA fallback
+    location ${BASE_URL} {
+        alias /workspace/dist/;
+        try_files $uri $uri/ /workspace/dist/index.html;
+    }
+
+    # Redirect bare root to BASE_URL when behind a proxy with a subpath
+    location = / {
+        return 301 ${BASE_URL};
+    }
+
+    gzip on;
+    gzip_vary on;
+    gzip_types
+        text/plain
+        text/css
+        text/javascript
+        application/javascript
+        application/json
+        image/svg+xml;
+}

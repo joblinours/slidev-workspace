@@ -1,14 +1,11 @@
 import { computed, ref } from "vue";
+import MiniSearch from "minisearch";
 import type { SlideData, SlideInfo } from "../../types/slide";
 import { IS_DEVELOPMENT } from "../constants/env";
 import { pathJoin } from "../lib/pathJoin";
 
-/**
- * Check if a string is a valid URL
- */
 function isUrl(str: string | undefined): boolean {
   if (!str) return false;
-
   try {
     new URL(str);
     return true;
@@ -23,26 +20,18 @@ function isUrl(str: string | undefined): boolean {
  * 2. seoMeta.ogImage (explicit og-image config)
  * 3. background (background image)
  * 4. default cover image (https://cover.sli.dev)
- *
- * Example (development mode with og-image.png):
- * returns: "http://localhost:3001/og-image.png"
- *
- * Example (production mode with og-image.png):
- * returns: "https://my-slides.com/slidev-workspace-starter/og-image.png?v=<hash>"
  */
 export function resolveImageUrl(slide: SlideInfo, domain: string): string {
   const { hasOgImage, path: slidePath, baseUrl, frontmatter } = slide;
   const seoOgImage = frontmatter.seoMeta?.ogImage;
   const background = frontmatter.background;
 
-  // Priority 1: og-image.png (if exists)
   if (hasOgImage) {
     const imagePath = `og-image.png?v=${Date.now()}`;
     try {
       const path = IS_DEVELOPMENT
         ? imagePath
         : pathJoin(baseUrl, slidePath, imagePath);
-
       return new URL(path, domain).href;
     } catch (error) {
       console.error("Failed to resolve og-image.png path:", error);
@@ -50,12 +39,8 @@ export function resolveImageUrl(slide: SlideInfo, domain: string): string {
     }
   }
 
-  // Priority 2: seoMeta.ogImage
   if (seoOgImage) {
-    if (isUrl(seoOgImage)) {
-      return seoOgImage;
-    }
-
+    if (isUrl(seoOgImage)) return seoOgImage;
     try {
       return IS_DEVELOPMENT
         ? new URL(seoOgImage, domain).href
@@ -66,12 +51,8 @@ export function resolveImageUrl(slide: SlideInfo, domain: string): string {
     }
   }
 
-  // Priority 3: background
   if (background) {
-    if (isUrl(background)) {
-      return background;
-    }
-
+    if (isUrl(background)) return background;
     try {
       return IS_DEVELOPMENT
         ? new URL(background, domain).href
@@ -82,9 +63,10 @@ export function resolveImageUrl(slide: SlideInfo, domain: string): string {
     }
   }
 
-  // Priority 4: default cover
   return "https://cover.sli.dev";
 }
+
+let miniSearch: MiniSearch | null = null;
 
 export function useSlides() {
   const slidesData = ref<SlideInfo[]>([]);
@@ -94,37 +76,60 @@ export function useSlides() {
       ? __SLIDEV_WORKSPACE_DEV_PORT_BASE__
       : 3001;
 
-  // Dynamically import slidev:content to avoid build-time issues
   const loadSlidesData = async () => {
     try {
       const module = await import("slidev:content");
       slidesData.value = module.default || [];
-    } catch (error) {
-      console.warn("Failed to load slides data:", error);
+
+      // Build full-text search index
+      miniSearch = new MiniSearch<{ id: string }>({
+        fields: ["title", "description", "author", "content"],
+        storeFields: ["id"],
+        searchOptions: { boost: { title: 2 }, fuzzy: 0.2 },
+      });
+      miniSearch.addAll(
+        slidesData.value.map((s) => ({
+          id: s.id,
+          title: s.frontmatter.title || s.path,
+          description:
+            s.frontmatter.info || s.frontmatter.seoMeta?.ogDescription || "",
+          author: s.frontmatter.author || "",
+          content: s.content,
+        })),
+      );
+    } catch {
       slidesData.value = [];
     } finally {
       isLoading.value = false;
     }
   };
 
-  // Load slides data on initialization
   loadSlidesData();
 
   const slides = computed<SlideData[]>(() => {
     if (!slidesData.value || slidesData.value.length === 0) return [];
 
     return slidesData.value.map((slide, index) => {
-      // Generate port based on slide index: base, base + 1, base + 2...
       const port = devServerBasePort + index;
-      // Create dev server URL
       const devServerUrl = `http://localhost:${port}`;
       const domain = IS_DEVELOPMENT ? devServerUrl : window.location.origin;
 
       const imageUrl = resolveImageUrl(slide, domain);
 
+      const slideUrl = IS_DEVELOPMENT ? devServerUrl : slide.path;
+      const presenterUrl = IS_DEVELOPMENT
+        ? `${devServerUrl}/?presenter`
+        : `${slide.path.replace(/\/?$/, "/")}?presenter`;
+
+      const exportBase = IS_DEVELOPMENT
+        ? `${devServerUrl}/`
+        : pathJoin(slide.baseUrl, slide.path) + "/";
+
       return {
+        id: slide.id,
         title: slide.frontmatter.title || slide.path,
-        url: IS_DEVELOPMENT ? devServerUrl : slide.path,
+        url: slideUrl,
+        presenterUrl,
         description:
           slide.frontmatter.info ||
           slide.frontmatter.seoMeta?.ogDescription ||
@@ -136,16 +141,28 @@ export function useSlides() {
         transition: slide.frontmatter.transition,
         class: slide.frontmatter.class,
         category: slide.category,
+        tags: slide.frontmatter.tags || [],
+        exports: {
+          pdf: slide.exports.pdf ? `${exportBase}export.pdf` : undefined,
+          pptx: slide.exports.pptx ? `${exportBase}export.pptx` : undefined,
+        },
       };
     });
   });
 
   const slidesCount = computed(() => slides.value.length);
 
+  function search(term: string): string[] {
+    if (!miniSearch || !term) return [];
+    return miniSearch.search(term).map((r) => r.id as string);
+  }
+
   return {
     slides,
+    slidesData,
     slidesCount,
     loadSlidesData,
     isLoading,
+    search,
   };
 }

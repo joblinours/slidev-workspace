@@ -31,6 +31,8 @@ export function loadConfig(workingDir?: string): SlidevWorkspaceConfig {
   const projectRoot =
     workingDir || process.env.SLIDEV_WORKSPACE_CWD || process.cwd();
 
+  let fileConfig: Partial<SlidevWorkspaceConfig> | null = null;
+
   for (const configPath of configPaths) {
     const fullPath = join(projectRoot, configPath);
 
@@ -38,8 +40,8 @@ export function loadConfig(workingDir?: string): SlidevWorkspaceConfig {
       try {
         if (configPath.endsWith(".yml") || configPath.endsWith(".yaml")) {
           const content = readFileSync(fullPath, "utf8");
-          const config = parseYaml(content) as SlidevWorkspaceConfig;
-          return { ...DEFAULT_CONFIG, ...config };
+          fileConfig = parseYaml(content) as SlidevWorkspaceConfig;
+          break;
         }
         // For JS/TS config files, we'd need dynamic import here
         // For now, just use YAML configs
@@ -49,7 +51,19 @@ export function loadConfig(workingDir?: string): SlidevWorkspaceConfig {
     }
   }
 
-  return DEFAULT_CONFIG;
+  const merged: SlidevWorkspaceConfig = {
+    ...DEFAULT_CONFIG,
+    ...(fileConfig ?? {}),
+  };
+
+  // BASE_URL env var is used as a fallback when no config file sets baseUrl
+  // (the Docker entrypoint generates slidev-workspace.yaml, so this covers the case
+  //  where the container starts without a pre-existing config file)
+  if (!fileConfig && process.env.BASE_URL) {
+    merged.baseUrl = process.env.BASE_URL;
+  }
+
+  return merged;
 }
 
 export function resolveSlidesDirs(
