@@ -1,4 +1,4 @@
-# Slidev Workspace
+# Slidev Workspace New Version
 
 Interface web unifiée pour gérer et consulter toutes vos présentations [Slidev](https://sli.dev), déployée via Docker et auto-synchronisée depuis un dépôt GitHub.
 
