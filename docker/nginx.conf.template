@@ -27,11 +27,6 @@ server {
         try_files $uri $uri/ /workspace/dist/index.html;
     }
 
-    # Redirect bare root to BASE_URL when behind a proxy with a subpath
-    location = / {
-        return 301 ${BASE_URL};
-    }
-
     gzip on;
     gzip_vary on;
     gzip_types
