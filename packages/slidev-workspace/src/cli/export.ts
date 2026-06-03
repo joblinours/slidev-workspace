@@ -1,5 +1,5 @@
-import { join } from "node:path";
-import { existsSync, mkdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { existsSync, mkdirSync, copyFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 
 import { loadConfig, resolveSlidesDirs } from "../scripts/config";
@@ -50,12 +50,22 @@ export async function exportSlides(names?: string[]) {
 
     mkdirSync(distDir, { recursive: true });
 
+    const outputSlideDir = resolve(workspaceCwd, config.outputDir, slideName);
+    mkdirSync(outputSlideDir, { recursive: true });
+
     console.log(`📄 Exporting PDF for: ${slideName}`);
     try {
       execSync(
         `pnpm exec slidev export slides.md --output dist/export.pdf --format pdf --timeout 60000`,
         { cwd: slideDir, stdio: "inherit" },
       );
+      // Copy export to workspace dist so Nginx can serve it
+      if (existsSync(join(distDir, "export.pdf"))) {
+        copyFileSync(
+          join(distDir, "export.pdf"),
+          join(outputSlideDir, "export.pdf"),
+        );
+      }
       console.log(`✅ PDF exported: ${slideName}`);
     } catch (error) {
       console.warn(
@@ -70,6 +80,13 @@ export async function exportSlides(names?: string[]) {
         `pnpm exec slidev export slides.md --output dist/export.pptx --format pptx --timeout 60000`,
         { cwd: slideDir, stdio: "inherit" },
       );
+      // Copy export to workspace dist so Nginx can serve it
+      if (existsSync(join(distDir, "export.pptx"))) {
+        copyFileSync(
+          join(distDir, "export.pptx"),
+          join(outputSlideDir, "export.pptx"),
+        );
+      }
       console.log(`✅ PPTX exported: ${slideName}`);
     } catch {
       // PPTX support varies by Slidev version — not a fatal error

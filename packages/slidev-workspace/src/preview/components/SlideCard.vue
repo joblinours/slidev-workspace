@@ -4,7 +4,7 @@
     @click="openSlide"
   >
     <div class="flex flex-row">
-      <!-- Thumbnail -->
+      <!-- Thumbnail — #/1 forces slide 1 in Slidev's hash router -->
       <div
         class="relative overflow-hidden rounded-l-xl flex-shrink-0 bg-muted"
         style="width: 240px; height: 135px"
@@ -13,9 +13,10 @@
           sandbox="allow-scripts" intentionally excludes allow-same-origin:
           prevents Slidev from accessing shared localStorage/BroadcastChannel
           and syncing the current slide page into the thumbnail.
+          #/1 forces the first slide regardless of router state.
         -->
         <iframe
-          :src="url"
+          :src="`${url}#/1`"
           sandbox="allow-scripts"
           loading="lazy"
           tabindex="-1"
@@ -41,21 +42,10 @@
           {{ description }}
         </CardDescription>
 
-        <!-- Tags -->
-        <div v-if="tags && tags.length > 0" class="flex flex-wrap gap-1 mt-0.5">
-          <span
-            v-for="tag in tags"
-            :key="tag"
-            class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary"
-          >
-            {{ tag }}
-          </span>
-        </div>
-
         <!-- Footer: meta + actions -->
         <div class="flex items-center justify-between mt-auto pt-1 gap-2">
           <div
-            class="flex items-center gap-3 text-xs text-muted-foreground min-w-0"
+            class="flex items-center gap-2 text-xs text-muted-foreground min-w-0 flex-wrap"
           >
             <span class="flex items-center gap-1 truncate">
               <User class="h-3 w-3 flex-shrink-0" />
@@ -65,6 +55,14 @@
               <Calendar class="h-3 w-3" />
               {{ date }}
             </span>
+            <!-- Tags inline with author/date -->
+            <span
+              v-for="tag in tags"
+              :key="tag"
+              class="inline-flex items-center rounded-full px-2 py-0.5 font-medium bg-primary/10 text-primary flex-shrink-0"
+            >
+              {{ tag }}
+            </span>
           </div>
 
           <!-- Action buttons — @click.stop prevents card navigation -->
@@ -73,7 +71,7 @@
               type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
               title="Mode présentateur"
-              @click="openUrl(presenterUrl)"
+              @click="openPresenter"
             >
               <Monitor class="h-3 w-3" />
               Présenter
@@ -144,8 +142,9 @@ function openSlide() {
   window.open(props.url, "_blank");
 }
 
-function openUrl(url: string) {
-  window.open(url, "_blank");
+function openPresenter() {
+  window.open(props.presenterUrl, "_blank");
+  window.open(props.url, "_blank");
 }
 
 function downloadUrl(url: string) {
