@@ -84,6 +84,12 @@ PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
 PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
   ${CLI} export || echo "⚠️ Certains exports ont échoué (non fatal)"
 
+# ── 5b. Rebuild workspace SPA avec statut exports à jour ────────────────────
+# Le SPA est buildé avant les exports (étape 4), donc les flags exports.pdf/pptx
+# sont faux. On rebuild uniquement le SPA (pas les slides) pour les corriger.
+echo "=== Rebuild workspace SPA (post-export) ==="
+SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build-workspace || echo "⚠️ Workspace rebuild échoué (non fatal)"
+
 # ── 6. Configurer Nginx ──────────────────────────────────────────────────────
 echo "=== Configuration Nginx ==="
 export BASE_URL="${BASE_URL:-/}"

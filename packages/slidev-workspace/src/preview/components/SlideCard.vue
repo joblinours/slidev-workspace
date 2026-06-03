@@ -10,14 +10,15 @@
         style="width: 240px; height: 135px"
       >
         <!--
-          sandbox="allow-scripts" intentionally excludes allow-same-origin:
-          prevents Slidev from accessing shared localStorage/BroadcastChannel
-          and syncing the current slide page into the thumbnail.
-          #/1 forces the first slide regardless of router state.
+          allow-same-origin is needed so the iframe can load its own assets
+          (JS/CSS) from the same origin. Without it the iframe origin is null
+          and all sub-resources are blocked by CORS.
+          #/1 in the src forces Slidev's hash router to slide 1, overriding
+          any localStorage-persisted position.
         -->
         <iframe
           :src="`${url}#/1`"
-          sandbox="allow-scripts"
+          sandbox="allow-scripts allow-same-origin"
           loading="lazy"
           tabindex="-1"
           class="pointer-events-none border-0"

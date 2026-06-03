@@ -57,6 +57,20 @@ export async function runViteBuild(names?: string[]) {
   }
 }
 
+/** Rebuild only the workspace SPA (no slides, no copy). Used after export to
+ *  bake the updated exports.pdf / exports.pptx flags into the workspace index. */
+export async function runViteWorkspaceBuild() {
+  try {
+    console.log("📦 Rebuilding Slidev Workspace SPA (post-export)...");
+    const config = createViteConfig(DEFAULT_PREVIEW_PORT, "build");
+    await build(config);
+    console.log("✅ Workspace SPA rebuilt.");
+  } catch (error) {
+    console.error("❌ Workspace SPA rebuild failed:", error);
+    process.exit(1);
+  }
+}
+
 export async function runVitePreview(previewPort?: number) {
   try {
     console.log("🚀 Starting Slidev Workspace development server...");

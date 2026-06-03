@@ -204,6 +204,7 @@ import {
 import { useSlides } from "../composables/useSlides";
 import { useConfig } from "../composables/useConfig";
 import { useDarkMode } from "../composables/useDarkMode";
+import { IS_DEVELOPMENT } from "../constants/env";
 import { Input } from "../components/ui/input";
 import SlideCard from "./SlideCard.vue";
 import TagEditor from "./TagEditor.vue";
@@ -327,6 +328,12 @@ function openTagEditor(slide: SlideData) {
 
 async function onTagsSaved() {
   editingSlide.value = null;
-  await loadSlidesData();
+  if (IS_DEVELOPMENT) {
+    // Dev: HMR will push updated slidev:content automatically
+    await loadSlidesData();
+  } else {
+    // Prod: slidev:content is a static bundle — reload to pick up cron rebuild
+    window.location.reload();
+  }
 }
 </script>

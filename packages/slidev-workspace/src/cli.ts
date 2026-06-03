@@ -4,7 +4,11 @@ import { Command } from "commander";
 
 import { exportOgImages } from "./cli/slides";
 import { exportSlides } from "./cli/export";
-import { runViteBuild, runVitePreview } from "./cli/vite";
+import {
+  runViteBuild,
+  runVitePreview,
+  runViteWorkspaceBuild,
+} from "./cli/vite";
 import { parseNames, parsePortOption, setWorkspaceCwd } from "./cli/utils";
 
 function showHelp() {
@@ -71,6 +75,16 @@ async function main() {
     .action(async (names: string[]) => {
       setWorkspaceCwd();
       await runViteBuild(parseNames(names));
+    });
+
+  program
+    .command("build-workspace")
+    .description(
+      "Rebuild only the workspace SPA (no slides). Run after 'export' to bake export status into the index.",
+    )
+    .action(async () => {
+      setWorkspaceCwd();
+      await runViteWorkspaceBuild();
     });
 
   program
