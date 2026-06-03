@@ -1,29 +1,32 @@
 <template>
   <Card
     class="group hover:shadow-lg transition-all duration-200 cursor-pointer"
+    @click="openSlide"
   >
-    <a :href="url" target="_blank" class="flex flex-row">
+    <div class="flex flex-row">
       <!-- Thumbnail -->
       <div
-        class="relative overflow-hidden rounded-l-xl flex-shrink-0"
+        class="relative overflow-hidden rounded-l-xl flex-shrink-0 bg-muted"
         style="width: 240px; height: 135px"
       >
-        <!-- Live iframe thumbnail (dev: separate port, prod: same-origin path) -->
-        <div class="w-full h-full bg-muted overflow-hidden">
-          <iframe
-            :src="url"
-            sandbox="allow-same-origin allow-scripts"
-            loading="lazy"
-            tabindex="-1"
-            class="pointer-events-none border-0"
-            style="
-              width: 1280px;
-              height: 720px;
-              transform: scale(0.1875);
-              transform-origin: top left;
-            "
-          />
-        </div>
+        <!--
+          sandbox="allow-scripts" intentionally excludes allow-same-origin:
+          prevents Slidev from accessing shared localStorage/BroadcastChannel
+          and syncing the current slide page into the thumbnail.
+        -->
+        <iframe
+          :src="url"
+          sandbox="allow-scripts"
+          loading="lazy"
+          tabindex="-1"
+          class="pointer-events-none border-0"
+          style="
+            width: 1280px;
+            height: 720px;
+            transform: scale(0.1875);
+            transform-origin: top left;
+          "
+        />
       </div>
 
       <!-- Content -->
@@ -64,39 +67,40 @@
             </span>
           </div>
 
-          <!-- Action buttons -->
+          <!-- Action buttons — @click.stop prevents card navigation -->
           <div class="flex items-center gap-1 flex-shrink-0" @click.stop>
-            <a
-              :href="presenterUrl"
-              target="_blank"
+            <button
+              type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
               title="Mode présentateur"
+              @click="openUrl(presenterUrl)"
             >
               <Monitor class="h-3 w-3" />
               Présenter
-            </a>
-            <a
+            </button>
+            <button
               v-if="exports?.pdf"
-              :href="exports.pdf"
-              download
+              type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
               title="Télécharger PDF"
+              @click="downloadUrl(exports.pdf!)"
             >
               <FileDown class="h-3 w-3" />
               PDF
-            </a>
-            <a
+            </button>
+            <button
               v-if="exports?.pptx"
-              :href="exports.pptx"
-              download
+              type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
               title="Télécharger PPTX"
+              @click="downloadUrl(exports.pptx!)"
             >
               <FileDown class="h-3 w-3" />
               PPTX
-            </a>
+            </button>
             <button
               v-if="!exports?.pdf && !exports?.pptx"
+              type="button"
               disabled
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border opacity-40 cursor-not-allowed"
               title="Aucun export généré"
@@ -107,14 +111,14 @@
               type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
               title="Éditer les tags"
-              @click.stop="emit('edit-tags')"
+              @click="emit('edit-tags')"
             >
               <Tag class="h-3 w-3" />
             </button>
           </div>
         </div>
       </div>
-    </a>
+    </div>
   </Card>
 </template>
 
@@ -122,7 +126,7 @@
 import { Calendar, User, Monitor, FileDown, Tag } from "lucide-vue-next";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
-defineProps<{
+const props = defineProps<{
   title: string;
   image?: string;
   description?: string;
@@ -135,4 +139,19 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{ "edit-tags": [] }>();
+
+function openSlide() {
+  window.open(props.url, "_blank");
+}
+
+function openUrl(url: string) {
+  window.open(url, "_blank");
+}
+
+function downloadUrl(url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "";
+  a.click();
+}
 </script>

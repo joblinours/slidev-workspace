@@ -216,7 +216,7 @@ async function onTagsSaved() {
   width: 100%;
   max-width: var(--sw-layout-width, 97rem);
   margin: 0 auto;
-  grid-template-columns: var(--sw-sidebar-width, 270px) minmax(0, 1fr);
+  grid-template-columns: var(--sw-sidebar-width, 210px) minmax(0, 1fr);
   grid-template-rows: auto auto 1fr;
   grid-template-areas:
     "sidebar header"

@@ -176,7 +176,7 @@ const allCategory = computed(() =>
 const containerClass = computed(() =>
   props.variant === "drawer"
     ? "flex h-full flex-col px-6 py-8 text-sidebar-foreground"
-    : "sticky top-0 flex h-screen w-[270px] flex-col px-6 py-10 text-sidebar-foreground",
+    : "sticky top-0 flex h-screen w-[210px] flex-col px-4 py-8 text-sidebar-foreground",
 );
 
 const categoriesClass = computed(() =>

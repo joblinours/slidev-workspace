@@ -66,6 +66,10 @@ find "${SLIDES_EFFECTIVE_DIR}" -name "slides.md" -not -path "*/node_modules/*" |
   if [ -f "${dir}/package.json" ]; then
     echo "  pnpm install in ${dir}"
     CI=true pnpm install --dir "${dir}" --no-frozen-lockfile 2>&1 | tail -3
+    # playwright-chromium requis pour slidev export (navigateur déjà présent dans l'image Docker)
+    echo "  installing playwright-chromium in ${dir}"
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm add --dir "${dir}" -D playwright-chromium \
+      --no-frozen-lockfile 2>&1 | tail -2 || true
   fi
 done
 
@@ -75,7 +79,10 @@ SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build
 
 # ── 5. Export PDF/PPTX ──────────────────────────────────────────────────────
 echo "=== Export PDF/PPTX ==="
-SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export || echo "⚠️ Certains exports ont échoué (non fatal)"
+SLIDEV_WORKSPACE_CWD="${WORKSPACE}" \
+PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+  ${CLI} export || echo "⚠️ Certains exports ont échoué (non fatal)"
 
 # ── 6. Configurer Nginx ──────────────────────────────────────────────────────
 echo "=== Configuration Nginx ==="
