@@ -29,6 +29,6 @@ export default defineConfig([
     entry: ["./src/scripts/api-server.ts"],
     platform: "node",
     outDir: "dist",
-    external: ["fs", "path", "http", "url", "yaml"],
+    external: ["fs", "path", "http", "url", "child_process", "yaml"],
   },
 ]);

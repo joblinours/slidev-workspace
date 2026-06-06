@@ -108,6 +108,7 @@ SLIDES_TITLE="${SLIDES_TITLE:-Mes Présentations}" \
 # ── 8. Démarrer le serveur API (tags) en arrière-plan ──────────────────────
 echo "=== Démarrage du serveur API (port 3099) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
+SLIDEV_WORKSPACE_CWD="${WORKSPACE}" \
   node /app/packages/slidev-workspace/dist/api-server.js &
 
 # ── 9. Démarrer Nginx ──────────────────────────────────────────────────────

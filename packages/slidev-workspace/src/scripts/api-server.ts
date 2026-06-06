@@ -6,8 +6,14 @@
  */
 import http from "http";
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { execFileSync } from "child_process";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const CLI_PATH = join(__dirname, "cli.js");
+const WORKSPACE_CWD = process.env.SLIDEV_WORKSPACE_CWD || "/workspace";
 
 const PORT = 3099;
 
@@ -87,6 +93,13 @@ const server = http.createServer((req, res) => {
           res.end(`Slide not found: ${slidePath}`);
           return;
         }
+
+        console.log("🔄 Rebuilding workspace SPA after tag update…");
+        execFileSync("node", [CLI_PATH, "build-workspace"], {
+          env: { ...process.env, SLIDEV_WORKSPACE_CWD: WORKSPACE_CWD },
+          stdio: "inherit",
+        });
+        console.log("✅ Workspace SPA rebuilt.");
 
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true }));
