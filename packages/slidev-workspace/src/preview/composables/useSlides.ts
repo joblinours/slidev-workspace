@@ -132,7 +132,9 @@ export function useSlides() {
         ? `${devServerUrl}/presenter/1`
         : `${slideBase}presenter/1`;
 
-      const exportBase = IS_DEVELOPMENT ? `${devServerUrl}/` : slideBase;
+      const exportUrl = IS_DEVELOPMENT
+        ? `${devServerUrl}/export`
+        : `${slideBase}export`;
 
       return {
         id: slide.id,
@@ -140,6 +142,7 @@ export function useSlides() {
         title: slide.frontmatter.title || slide.path,
         url: slideUrl,
         presenterUrl,
+        exportUrl,
         description:
           slide.frontmatter.info ||
           slide.frontmatter.seoMeta?.ogDescription ||
@@ -152,10 +155,6 @@ export function useSlides() {
         class: slide.frontmatter.class,
         category: slide.category,
         tags: slide.frontmatter.tags || [],
-        exports: {
-          pdf: slide.exports.pdf ? `${exportBase}export.pdf` : undefined,
-          pptx: slide.exports.pptx ? `${exportBase}export.pptx` : undefined,
-        },
       };
     });
   });

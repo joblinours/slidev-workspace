@@ -77,26 +77,13 @@ done
 echo "=== Build de toutes les présentations ==="
 SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build
 
-# ── 5. Export PDF/PPTX ──────────────────────────────────────────────────────
-echo "=== Export PDF/PPTX ==="
-SLIDEV_WORKSPACE_CWD="${WORKSPACE}" \
-PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-  ${CLI} export || echo "⚠️ Certains exports ont échoué (non fatal)"
-
-# ── 5b. Rebuild workspace SPA avec statut exports à jour ────────────────────
-# Le SPA est buildé avant les exports (étape 4), donc les flags exports.pdf/pptx
-# sont faux. On rebuild uniquement le SPA (pas les slides) pour les corriger.
-echo "=== Rebuild workspace SPA (post-export) ==="
-SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build-workspace || echo "⚠️ Workspace rebuild échoué (non fatal)"
-
-# ── 6. Configurer Nginx ──────────────────────────────────────────────────────
+# ── 5. Configurer Nginx ──────────────────────────────────────────────────────
 echo "=== Configuration Nginx ==="
 export BASE_URL="${BASE_URL:-/}"
 envsubst '${BASE_URL}' < /app/docker/nginx.conf.template > /etc/nginx/sites-enabled/slidev-workspace.conf
 nginx -t
 
-# ── 7. Démarrer le cron git pull en arrière-plan ────────────────────────────
+# ── 6. Démarrer le cron git pull en arrière-plan ────────────────────────────
 echo "=== Démarrage du cron git pull (toutes les 30s) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
 WORKSPACE="${WORKSPACE}" \
@@ -105,12 +92,12 @@ BASE_URL="${BASE_URL:-/}" \
 SLIDES_TITLE="${SLIDES_TITLE:-Mes Présentations}" \
   /app/docker/cron-pull.sh &
 
-# ── 8. Démarrer le serveur API (tags) en arrière-plan ──────────────────────
+# ── 7. Démarrer le serveur API (tags) en arrière-plan ──────────────────────
 echo "=== Démarrage du serveur API (port 3099) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
 SLIDEV_WORKSPACE_CWD="${WORKSPACE}" \
   node /app/packages/slidev-workspace/dist/api-server.js &
 
-# ── 9. Démarrer Nginx ──────────────────────────────────────────────────────
+# ── 8. Démarrer Nginx ──────────────────────────────────────────────────────
 echo "=== Slidev Workspace prêt sur le port 8084 ==="
 exec nginx -g "daemon off;"

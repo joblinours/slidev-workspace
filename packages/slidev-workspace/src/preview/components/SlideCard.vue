@@ -78,33 +78,13 @@
               Présenter
             </button>
             <button
-              v-if="exports?.pdf"
               type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
-              title="Télécharger PDF"
-              @click="downloadUrl(exports.pdf!)"
+              title="Exporter (PDF via impression navigateur)"
+              @click="openExport"
             >
               <FileDown class="h-3 w-3" />
-              PDF
-            </button>
-            <button
-              v-if="exports?.pptx"
-              type="button"
-              class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
-              title="Télécharger PPTX"
-              @click="downloadUrl(exports.pptx!)"
-            >
-              <FileDown class="h-3 w-3" />
-              PPTX
-            </button>
-            <button
-              v-if="!exports?.pdf && !exports?.pptx"
-              type="button"
-              disabled
-              class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border opacity-40 cursor-not-allowed"
-              title="Aucun export généré"
-            >
-              <FileDown class="h-3 w-3" />
+              Export
             </button>
             <button
               type="button"
@@ -131,10 +111,10 @@ const props = defineProps<{
   description?: string;
   url: string;
   presenterUrl: string;
+  exportUrl: string;
   author: string;
   date: string;
   tags?: string[];
-  exports?: { pdf?: string; pptx?: string };
 }>();
 
 const emit = defineEmits<{ "edit-tags": [] }>();
@@ -148,10 +128,7 @@ function openPresenter() {
   window.open(props.url, "_blank");
 }
 
-function downloadUrl(url: string) {
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "";
-  a.click();
+function openExport() {
+  window.open(props.exportUrl, "_blank");
 }
 </script>

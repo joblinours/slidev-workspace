@@ -19,11 +19,6 @@ export interface SlideFrontmatter {
   tags?: string[];
 }
 
-export interface SlideExports {
-  pdf: boolean;
-  pptx: boolean;
-}
-
 export interface SlideInfo {
   id: string;
   path: string;
@@ -37,8 +32,6 @@ export interface SlideInfo {
   baseUrl: string;
   /** Whether og-image.png exists in the slide directory */
   hasOgImage: boolean;
-  /** Pre-generated export files available in slide dist/ */
-  exports: SlideExports;
 }
 
 export interface SlideData {
@@ -47,6 +40,7 @@ export interface SlideData {
   title: string;
   url: string;
   presenterUrl: string;
+  exportUrl: string;
   description: string;
   image: string;
   author: string;
@@ -56,8 +50,4 @@ export interface SlideData {
   class?: string;
   category?: string;
   tags: string[];
-  exports: {
-    pdf?: string;
-    pptx?: string;
-  };
 }

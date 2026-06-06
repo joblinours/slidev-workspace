@@ -33,7 +33,6 @@ while true; do
       slide_name=$(basename "${slide_rel}")
       echo "[cron] Rebuild: ${slide_name}"
       SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build "${slide_name}" 2>&1 | tail -5
-      SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export "${slide_name}" 2>&1 | tail -5 || true
     done <<< "${CHANGED}"
   fi
 

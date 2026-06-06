@@ -173,7 +173,7 @@
             :author="slide.author"
             :date="slide.date"
             :tags="slide.tags"
-            :exports="slide.exports"
+            :export-url="slide.exportUrl"
             @edit-tags="openTagEditor(slide)"
           />
         </div>
