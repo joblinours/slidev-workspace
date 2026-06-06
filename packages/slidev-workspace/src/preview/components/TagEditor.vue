@@ -140,7 +140,7 @@ async function save() {
   error.value = "";
 
   try {
-    const response = await fetch("/api/slides/tags", {
+    const response = await fetch(`${import.meta.env.BASE_URL}api/slides/tags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: props.slidePath, tags: currentTags.value }),
