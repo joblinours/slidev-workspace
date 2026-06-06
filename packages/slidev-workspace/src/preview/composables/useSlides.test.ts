@@ -527,12 +527,18 @@ describe("useSlides (Production Mode)", () => {
   }
 
   describe("URL generation in production", () => {
-    it("should use slide path as URL in production mode", async () => {
+    it("should join baseUrl + path with a trailing slash as URL in production mode", async () => {
       const result = await setupUseSlidesProduction();
 
-      expect(result.slides.value[0].url).toBe("/slides-presentation-1/");
-      expect(result.slides.value[1].url).toBe("/slides-presentation-2/");
-      expect(result.slides.value[2].url).toBe("/slides-presentation-3/");
+      expect(result.slides.value[0].url).toBe(
+        "/slidev-workspace-starter/slides-presentation-1/",
+      );
+      expect(result.slides.value[1].url).toBe(
+        "/slidev-workspace-starter/slides-presentation-2/",
+      );
+      expect(result.slides.value[2].url).toBe(
+        "/slidev-workspace-starter/slides-presentation-3/",
+      );
     });
   });
 

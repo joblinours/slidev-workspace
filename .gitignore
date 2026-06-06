@@ -5,3 +5,5 @@ dist
 *.skill
 
 _gh-pages
+deploy/portal-index.html
+deploy/reverse-proxy.conf

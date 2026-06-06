@@ -13,7 +13,8 @@ services:
       # Personal Access Token pour les repos privés (scope : repo read)
       - GITHUB_PAT=${GITHUB_PAT}
       # URL de base — utilisez / pour accès direct, /subpath/ derrière un reverse proxy
-      - BASE_URL=${BASE_URL:-/}
+      # Derrière proxy.jobl1n0urs.work, le service est servi sous /slides/
+      - BASE_URL=${BASE_URL:-/slides/}
       # Titre affiché dans l'interface
       - SLIDES_TITLE=${SLIDES_TITLE:-Mes Présentations}
     volumes:

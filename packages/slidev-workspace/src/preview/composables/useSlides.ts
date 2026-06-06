@@ -121,14 +121,18 @@ export function useSlides() {
 
       const imageUrl = resolveImageUrl(slide, domain);
 
-      const slideUrl = IS_DEVELOPMENT ? devServerUrl : slide.path;
+      // En production, l'URL doit inclure baseUrl ET un slash final.
+      // Sans baseUrl le chemin est résolu relativement à la page (fragile derrière
+      // un sous-chemin) ; sans slash final, le nginx du container répond par une
+      // redirection 301 qui fuite son adresse interne (http://IP:8084/...),
+      // ce qui casse l'iframe (Mixed Content + X-Frame-Options).
+      const slideBase = pathJoin(slide.baseUrl, slide.path) + "/";
+      const slideUrl = IS_DEVELOPMENT ? devServerUrl : slideBase;
       const presenterUrl = IS_DEVELOPMENT
         ? `${devServerUrl}/presenter/1`
-        : `${slide.path.replace(/\/?$/, "/")}presenter/1`;
+        : `${slideBase}presenter/1`;
 
-      const exportBase = IS_DEVELOPMENT
-        ? `${devServerUrl}/`
-        : pathJoin(slide.baseUrl, slide.path) + "/";
+      const exportBase = IS_DEVELOPMENT ? `${devServerUrl}/` : slideBase;
 
       return {
         id: slide.id,
