@@ -24,9 +24,10 @@ server {
     }
 
     # Slide sub-apps : SPA routing
-    # /slidev/3 → cherche /slidev/3, sinon → /slidev/index.html, sinon → 404
+    # /slidev/3       → /slidev/3 (asset) ou /slidev/index.html
+    # /slidev/export  → /slidev/export/index.html (page Slidev Browser Exporter)
     location ~ ^/([^/]+)/(.+)$ {
-        try_files $uri /$1/index.html =404;
+        try_files $uri $uri/index.html /$1/index.html =404;
     }
 
     # Workspace et tout le reste : SPA fallback → /index.html
