@@ -4,18 +4,11 @@
     @click="openSlide"
   >
     <div class="flex flex-row">
-      <!-- Thumbnail — #/1 forces slide 1 in Slidev's hash router -->
+      <!-- Thumbnail -->
       <div
         class="relative overflow-hidden rounded-l-xl flex-shrink-0 bg-muted"
         style="width: 240px; height: 135px"
       >
-        <!--
-          allow-same-origin is needed so the iframe can load its own assets
-          (JS/CSS) from the same origin. Without it the iframe origin is null
-          and all sub-resources are blocked by CORS.
-          #/1 in the src forces Slidev's hash router to slide 1, overriding
-          any localStorage-persisted position.
-        -->
         <iframe
           :src="`${url}#/1`"
           sandbox="allow-scripts allow-same-origin"
@@ -56,7 +49,6 @@
               <Calendar class="h-3 w-3" />
               {{ date }}
             </span>
-            <!-- Tags inline with author/date -->
             <span
               v-for="tag in tags"
               :key="tag"
@@ -66,7 +58,7 @@
             </span>
           </div>
 
-          <!-- Action buttons — @click.stop prevents card navigation -->
+          <!-- Action buttons -->
           <div class="flex items-center gap-1 flex-shrink-0" @click.stop>
             <button
               type="button"
@@ -77,15 +69,72 @@
               <Monitor class="h-3 w-3" />
               Présenter
             </button>
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
-              title="Exporter en PDF — toutes les slides s'affichent pour impression (Ctrl+P → Enregistrer en PDF)"
-              @click="openExport"
-            >
-              <FileDown class="h-3 w-3" />
-              Export
-            </button>
+
+            <!-- Export dropdown -->
+            <PopoverRoot v-model:open="exportOpen">
+              <PopoverTrigger as-child>
+                <button
+                  type="button"
+                  class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
+                  :class="{
+                    'opacity-60 cursor-wait': exportLoading !== null,
+                    'border-destructive text-destructive': exportError,
+                  }"
+                  :disabled="exportLoading !== null"
+                  :title="exportError ?? 'Exporter la présentation'"
+                  @click="exportError = null"
+                >
+                  <Loader2 v-if="exportLoading" class="h-3 w-3 animate-spin" />
+                  <FileDown v-else class="h-3 w-3" />
+                  {{
+                    exportLoading
+                      ? `Export ${exportLoading.toUpperCase()}…`
+                      : "Export"
+                  }}
+                  <ChevronDown class="h-2 w-2 opacity-60" />
+                </button>
+              </PopoverTrigger>
+              <PopoverPortal>
+                <PopoverContent
+                  class="z-50 w-48 rounded-lg border border-border bg-background shadow-lg p-1.5 space-y-0.5"
+                  :side-offset="4"
+                  align="end"
+                  @open-auto-focus.prevent
+                >
+                  <p
+                    class="px-2 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
+                  >
+                    Exporter
+                  </p>
+
+                  <button
+                    type="button"
+                    class="w-full flex items-center gap-2 text-xs px-2 py-1.5 rounded-md hover:bg-accent transition-colors text-left"
+                    @click="triggerExport('pdf')"
+                  >
+                    <FileDown class="h-3 w-3 text-red-500" />
+                    Télécharger PDF
+                  </button>
+
+                  <button
+                    type="button"
+                    class="w-full flex items-center gap-2 text-xs px-2 py-1.5 rounded-md hover:bg-accent transition-colors text-left"
+                    @click="triggerExport('pptx')"
+                  >
+                    <FileDown class="h-3 w-3 text-orange-500" />
+                    Télécharger PPTX
+                  </button>
+
+                  <div
+                    v-if="exportError"
+                    class="px-2 py-1 text-[10px] text-destructive leading-snug"
+                  >
+                    {{ exportError }}
+                  </div>
+                </PopoverContent>
+              </PopoverPortal>
+            </PopoverRoot>
+
             <button
               type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
@@ -102,7 +151,22 @@
 </template>
 
 <script setup lang="ts">
-import { Calendar, User, Monitor, FileDown, Tag } from "lucide-vue-next";
+import { ref } from "vue";
+import {
+  Calendar,
+  User,
+  Monitor,
+  FileDown,
+  Tag,
+  Loader2,
+  ChevronDown,
+} from "lucide-vue-next";
+import {
+  PopoverRoot,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverPortal,
+} from "reka-ui";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 
 const props = defineProps<{
@@ -111,13 +175,17 @@ const props = defineProps<{
   description?: string;
   url: string;
   presenterUrl: string;
-  exportUrl: string;
+  slidePath: string;
   author: string;
   date: string;
   tags?: string[];
 }>();
 
 const emit = defineEmits<{ "edit-tags": [] }>();
+
+const exportOpen = ref(false);
+const exportLoading = ref<"pdf" | "pptx" | null>(null);
+const exportError = ref<string | null>(null);
 
 function openSlide() {
   window.open(props.url, "_blank");
@@ -128,7 +196,37 @@ function openPresenter() {
   window.open(props.url, "_blank");
 }
 
-function openExport() {
-  window.open(props.exportUrl, "_blank");
+async function triggerExport(format: "pdf" | "pptx") {
+  exportOpen.value = false;
+  exportLoading.value = format;
+  exportError.value = null;
+
+  try {
+    const apiUrl =
+      `${import.meta.env.BASE_URL}api/slides/export` +
+      `?path=${encodeURIComponent(props.slidePath)}&format=${format}`;
+
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      const msg = await response.text();
+      throw new Error(msg || `HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = `${props.title}.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    exportError.value = err instanceof Error ? err.message : String(err);
+    exportOpen.value = true;
+  } finally {
+    exportLoading.value = null;
+  }
 }
 </script>

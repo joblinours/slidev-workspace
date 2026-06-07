@@ -170,10 +170,10 @@
             :description="slide.description"
             :url="slide.url"
             :presenter-url="slide.presenterUrl"
+            :slide-path="slide.path"
             :author="slide.author"
             :date="slide.date"
             :tags="slide.tags"
-            :export-url="slide.exportUrl"
             @edit-tags="openTagEditor(slide)"
           />
         </div>

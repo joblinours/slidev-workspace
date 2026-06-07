@@ -40,7 +40,6 @@ export interface SlideData {
   title: string;
   url: string;
   presenterUrl: string;
-  exportUrl: string;
   description: string;
   image: string;
   author: string;
