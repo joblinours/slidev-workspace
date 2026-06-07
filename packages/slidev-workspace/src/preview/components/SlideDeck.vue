@@ -175,7 +175,9 @@
             :date="slide.date"
             :tags="slide.tags"
             :pdf-url="slide.pdfUrl"
+            :pdf-dark-url="slide.pdfDarkUrl"
             :pptx-url="slide.pptxUrl"
+            :pptx-dark-url="slide.pptxDarkUrl"
             @edit-tags="openTagEditor(slide)"
           />
         </div>

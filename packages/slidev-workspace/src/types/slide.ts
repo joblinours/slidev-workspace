@@ -50,5 +50,7 @@ export interface SlideData {
   category?: string;
   tags: string[];
   pdfUrl: string | null;
+  pdfDarkUrl: string | null;
   pptxUrl: string | null;
+  pptxDarkUrl: string | null;
 }

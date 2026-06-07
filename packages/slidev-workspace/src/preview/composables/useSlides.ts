@@ -4,6 +4,57 @@ import type { SlideData, SlideInfo } from "../../types/slide";
 import { IS_DEVELOPMENT } from "../constants/env";
 import { pathJoin } from "../lib/pathJoin";
 
+export interface ExportStatus {
+  pdf: boolean;
+  pdfDark: boolean;
+  pptx: boolean;
+  pptxDark: boolean;
+  pdfWatermark: boolean;
+}
+
+/** Fetch export file existence for a single slide from the API server. */
+export async function fetchExportStatus(
+  slideName: string,
+): Promise<ExportStatus> {
+  try {
+    const res = await fetch(
+      `/api/slides/export-status?slideName=${encodeURIComponent(slideName)}`,
+    );
+    if (!res.ok) throw new Error("non-ok");
+    return (await res.json()) as ExportStatus;
+  } catch {
+    return {
+      pdf: false,
+      pdfDark: false,
+      pptx: false,
+      pptxDark: false,
+      pdfWatermark: false,
+    };
+  }
+}
+
+/**
+ * Trigger on-demand export for a slide.
+ * Returns the file URL when done.
+ */
+export async function triggerExport(
+  slideName: string,
+  format: "pdf" | "pptx" | "pdf-dark" | "pptx-dark" | "pdf-watermark",
+  watermarkText?: string,
+): Promise<string> {
+  const res = await fetch("/api/slides/export", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slideName, format, watermarkText }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Export failed");
+  }
+  const json = (await res.json()) as { fileUrl: string };
+  return json.fileUrl;
+}
+
 function isUrl(str: string | undefined): boolean {
   if (!str) return false;
   try {
@@ -133,7 +184,11 @@ export function useSlides() {
         : `${slideBase}presenter/1`;
 
       const pdfUrl = IS_DEVELOPMENT ? null : slideBase + "export.pdf";
+      const pdfDarkUrl = IS_DEVELOPMENT ? null : slideBase + "export-dark.pdf";
       const pptxUrl = IS_DEVELOPMENT ? null : slideBase + "export.pptx";
+      const pptxDarkUrl = IS_DEVELOPMENT
+        ? null
+        : slideBase + "export-dark.pptx";
 
       return {
         id: slide.id,
@@ -154,7 +209,9 @@ export function useSlides() {
         category: slide.category,
         tags: slide.frontmatter.tags || [],
         pdfUrl,
+        pdfDarkUrl,
         pptxUrl,
+        pptxDarkUrl,
       };
     });
   });

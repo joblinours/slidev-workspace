@@ -19,7 +19,6 @@ const mockSlidesData: SlideInfo[] = [
     content: "# Slide content",
     baseUrl: "/slidev-workspace-starter/",
     hasOgImage: true,
-    exports: { pdf: true, pptx: true },
   },
   {
     id: "slide-2",
@@ -37,7 +36,6 @@ const mockSlidesData: SlideInfo[] = [
     content: "# Another slide",
     baseUrl: "/slidev-workspace-starter/",
     hasOgImage: false,
-    exports: { pdf: false, pptx: false },
   },
   {
     id: "slide-3",
@@ -48,7 +46,6 @@ const mockSlidesData: SlideInfo[] = [
     content: "# Minimal slide",
     baseUrl: "/slidev-workspace-starter/",
     hasOgImage: false,
-    exports: { pdf: false, pptx: false },
   },
 ];
 
