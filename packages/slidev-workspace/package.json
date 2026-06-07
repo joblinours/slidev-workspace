@@ -48,6 +48,7 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.11",
     "minisearch": "^7.1.1",
+    "playwright-chromium": "1.50.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vueuse/core": "^13.8.0",
     "class-variance-authority": "^0.7.1",

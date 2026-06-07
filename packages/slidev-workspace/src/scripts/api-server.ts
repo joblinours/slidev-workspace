@@ -5,13 +5,15 @@
  *
  * Routes:
  *   POST /api/slides/tags   – update tags in slides.md + rebuild workspace SPA
- *   GET  /api/slides/export – on-demand Playwright PDF/PPTX export
+ *   GET  /api/slides/export – on-demand Playwright PDF export
  */
 import http from "http";
+import net from "net";
 import {
   readFileSync,
   writeFileSync,
   existsSync,
+  statSync,
   mkdtempSync,
   rmSync,
   createReadStream,
@@ -20,14 +22,13 @@ import { stat } from "fs/promises";
 import { join, dirname } from "path";
 import { tmpdir } from "os";
 import { fileURLToPath } from "url";
-import { execFile, execFileSync } from "child_process";
-import { promisify } from "util";
+import { execFileSync } from "child_process";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
+import { chromium } from "playwright-chromium";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = join(__dirname, "cli.js");
 const WORKSPACE_CWD = process.env.SLIDEV_WORKSPACE_CWD || "/workspace";
-const execFileAsync = promisify(execFile);
 
 const PORT = 3099;
 
@@ -68,6 +69,34 @@ function updateTagsInFile(fullPath: string, tags: string[]): void {
   );
 }
 
+// ── MIME types for local static server ─────────────────────────────────────
+const MIME: Record<string, string> = {
+  html: "text/html; charset=utf-8",
+  js: "application/javascript",
+  mjs: "application/javascript",
+  css: "text/css",
+  json: "application/json",
+  svg: "image/svg+xml",
+  png: "image/png",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  gif: "image/gif",
+  woff2: "font/woff2",
+  woff: "font/woff",
+  ttf: "font/ttf",
+  ico: "image/x-icon",
+};
+
+function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const s = net.createServer();
+    s.listen(0, "127.0.0.1", () => {
+      const port = (s.address() as net.AddressInfo).port;
+      s.close((err) => (err ? reject(err) : resolve(port)));
+    });
+  });
+}
+
 // ── Export endpoint (async) ─────────────────────────────────────────────────
 
 async function handleExport(
@@ -84,6 +113,15 @@ async function handleExport(
     return;
   }
 
+  if (format === "pptx") {
+    res.writeHead(501, { "Content-Type": "text/plain" });
+    res.end(
+      "Format PPTX non disponible en production — utilisez PDF à la place.",
+    );
+    return;
+  }
+
+  // The slide source directory (for validation only)
   const slideDir = findSlideDir(slidePath);
   if (!slideDir) {
     res.writeHead(404, { "Content-Type": "text/plain" });
@@ -91,42 +129,102 @@ async function handleExport(
     return;
   }
 
-  const tmpDir = mkdtempSync(join(tmpdir(), "slidev-export-"));
-  const outputFile = join(tmpDir, `export.${format}`);
+  // The slide was built into /workspace/dist/{slidePath}/
+  const distDir = join(WORKSPACE_CWD, "dist", slidePath);
+  if (!existsSync(join(distDir, "index.html"))) {
+    res.writeHead(500, { "Content-Type": "text/plain" });
+    res.end(
+      `Slide non compilée : dist/${slidePath}/index.html introuvable. Relancez le container.`,
+    );
+    return;
+  }
 
-  try {
-    console.log(`📤 Exporting "${slidePath}" as ${format.toUpperCase()}…`);
+  // Read baseUrl from workspace config to reconstruct the slide's asset prefix
+  const configPath = join(WORKSPACE_CWD, "slidev-workspace.yaml");
+  let baseUrl = "/";
+  if (existsSync(configPath)) {
+    const cfg = parseYaml(readFileSync(configPath, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    if (typeof cfg.baseUrl === "string") {
+      baseUrl = cfg.baseUrl.endsWith("/") ? cfg.baseUrl : cfg.baseUrl + "/";
+    }
+  }
 
-    await execFileAsync(
-      "pnpm",
-      [
-        "exec",
-        "slidev",
-        "export",
-        "slides.md",
-        "--output",
-        outputFile,
-        "--format",
-        format,
-        "--timeout",
-        "120000",
-      ],
-      { cwd: slideDir, timeout: 180_000 },
+  // Slide was built with --base {baseUrl}{slidePath}/ so assets are at
+  // /{baseUrl}{slidePath}/assets/…  We serve a local HTTP server that maps
+  // those absolute paths back to the local dist directory, so Playwright can
+  // load the slide without needing the external reverse proxy.
+  const slideBase = `${baseUrl}${slidePath}/`;
+
+  const localPort = await freePort();
+  const localServer = http.createServer((req2, res2) => {
+    let pathname = decodeURIComponent(
+      new URL(req2.url!, "http://localhost").pathname,
     );
 
-    if (!existsSync(outputFile))
-      throw new Error("Slidev produced no output file");
+    // Strip the slide's absolute base URL prefix → relative path in distDir
+    if (pathname.startsWith(slideBase)) {
+      pathname = pathname.slice(slideBase.length);
+    } else if (pathname === slideBase.slice(0, -1) || pathname === "/") {
+      pathname = "index.html";
+    }
+
+    pathname = pathname.replace(/^\/+/, "") || "index.html";
+    const filePath = join(distDir, pathname);
+
+    if (existsSync(filePath) && !statSync(filePath).isDirectory()) {
+      const ext = (filePath.split(".").pop() ?? "").toLowerCase();
+      res2.writeHead(200, {
+        "Content-Type": MIME[ext] ?? "application/octet-stream",
+      });
+      createReadStream(filePath).pipe(res2);
+    } else {
+      // SPA fallback → index.html
+      res2.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+      createReadStream(join(distDir, "index.html")).pipe(res2);
+    }
+  });
+
+  await new Promise<void>((resolve) =>
+    localServer.listen(localPort, "127.0.0.1", resolve),
+  );
+
+  const tmpDir = mkdtempSync(join(tmpdir(), "slidev-export-"));
+  const outputFile = join(tmpDir, "export.pdf");
+  let browser: Awaited<ReturnType<typeof chromium.launch>> | null = null;
+
+  try {
+    console.log(`📤 Exporting "${slidePath}" as PDF via Playwright…`);
+
+    browser = await chromium.launch({ headless: true });
+    const page = await browser.newPage();
+
+    // Viewport matches Slidev's default 16:9 slide size
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    const slideUrl = `http://127.0.0.1:${localPort}${slideBase}?print`;
+    console.log(`  → ${slideUrl}`);
+    await page.goto(slideUrl, { waitUntil: "networkidle", timeout: 60_000 });
+
+    // Extra settle time for fonts / animations
+    await page.waitForTimeout(2_000);
+
+    await page.pdf({
+      path: outputFile,
+      printBackground: true,
+      landscape: true,
+      format: "A4",
+    });
+
+    if (!existsSync(outputFile)) throw new Error("Playwright produced no PDF");
 
     const { size } = await stat(outputFile);
-
-    const mimeTypes: Record<string, string> = {
-      pdf: "application/pdf",
-      pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    };
-
+    const fileName = encodeURIComponent(slidePath.split("/").pop()!);
     res.writeHead(200, {
-      "Content-Type": mimeTypes[format],
-      "Content-Disposition": `attachment; filename="${encodeURIComponent(slidePath)}.${format}"`,
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${fileName}.pdf"`,
       "Content-Length": String(size),
       "Access-Control-Allow-Origin": "*",
     });
@@ -138,8 +236,10 @@ async function handleExport(
       stream.on("error", reject);
     });
 
-    console.log(`✅ Export done: ${slidePath}.${format}`);
+    console.log(`✅ PDF export done: ${slidePath}`);
   } finally {
+    browser?.close().catch(() => {});
+    localServer.close();
     rmSync(tmpDir, { recursive: true, force: true });
   }
 }

@@ -69,14 +69,6 @@ find "${SLIDES_EFFECTIVE_DIR}" -name "slides.md" -not -path "*/node_modules/*" |
     # Force la mise à jour de Slidev vers la dernière version (ignore le lockfile)
     echo "  updating @slidev/cli to latest in ${dir}"
     pnpm add --dir "${dir}" @slidev/cli@latest --no-frozen-lockfile 2>&1 | tail -2 || true
-    # playwright-chromium requis pour slidev export.
-    # La version doit correspondre à l'image Docker (playwright:v1.50.0-noble).
-    # PLAYWRIGHT_BROWSERS_PATH pointe vers le Chromium déjà présent dans l'image.
-    echo "  installing playwright-chromium@1.50.0 in ${dir}"
-    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
-      pnpm add --dir "${dir}" -D playwright-chromium@1.50.0 \
-      --no-frozen-lockfile 2>&1 | tail -3 || true
   fi
 done
 
