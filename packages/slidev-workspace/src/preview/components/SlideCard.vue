@@ -80,7 +80,7 @@
             <button
               type="button"
               class="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border hover:bg-accent transition-colors"
-              title="Exporter (PDF via impression navigateur)"
+              title="Exporter en PDF — toutes les slides s'affichent pour impression (Ctrl+P → Enregistrer en PDF)"
               @click="openExport"
             >
               <FileDown class="h-3 w-3" />

@@ -132,9 +132,13 @@ export function useSlides() {
         ? `${devServerUrl}/presenter/1`
         : `${slideBase}presenter/1`;
 
+      // In dev the Vite server exposes a full Browser Exporter at /export.
+      // In production that entry point is not built; the closest equivalent is
+      // ?print, which renders all slides in print layout (same flag in the
+      // bundle: n.value.has("print") || routeName==="export").
       const exportUrl = IS_DEVELOPMENT
         ? `${devServerUrl}/export`
-        : `${slideBase}export`;
+        : `${slideBase}?print`;
 
       return {
         id: slide.id,

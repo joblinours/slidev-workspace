@@ -24,8 +24,8 @@ server {
     }
 
     # Slide sub-apps : SPA routing
-    # /slidev/3       → /slidev/3 (asset) ou /slidev/index.html
-    # /slidev/export  → /slidev/export/index.html (page Slidev Browser Exporter)
+    # Slidev v52 builds a single index.html SPA; Vue Router handles /presenter/:no
+    # and /export/:no routes. ?print query param enables full-slide print layout.
     location ~ ^/([^/]+)/(.+)$ {
         try_files $uri $uri/index.html /$1/index.html =404;
     }
