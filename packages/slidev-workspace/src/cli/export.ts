@@ -40,14 +40,6 @@ export async function exportSlides(names?: string[]) {
     }
 
     const distDir = join(slideDir, "dist");
-    if (!existsSync(distDir)) {
-      // Slide hasn't been built yet — skip export silently
-      console.warn(
-        `⚠️ Skipping export for ${slideName}: dist/ not found (build first)`,
-      );
-      continue;
-    }
-
     mkdirSync(distDir, { recursive: true });
 
     const outputSlideDir = resolve(workspaceCwd, config.outputDir, slideName);

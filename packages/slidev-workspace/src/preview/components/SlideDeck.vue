@@ -174,6 +174,8 @@
             :author="slide.author"
             :date="slide.date"
             :tags="slide.tags"
+            :pdf-url="slide.pdfUrl"
+            :pptx-url="slide.pptxUrl"
             @edit-tags="openTagEditor(slide)"
           />
         </div>

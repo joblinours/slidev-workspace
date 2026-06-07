@@ -10,10 +10,14 @@ const meta: Meta<typeof SlideCard> = {
     title: "Design Systems 101",
     description:
       "Learn how to build scalable UI foundations with practical tokens, components, and patterns.",
-    url: "https://example.com",
+    url: "https://example.com/",
+    presenterUrl: "https://example.com/presenter/1",
+    slidePath: "design-systems-101",
     author: "Lea Chiu",
     date: "2026-02-01",
     image: "https://picsum.photos/200",
+    pdfUrl: "https://example.com/export.pdf",
+    pptxUrl: "https://example.com/export.pptx",
   },
   render: (args) => ({
     components: { SlideCard },

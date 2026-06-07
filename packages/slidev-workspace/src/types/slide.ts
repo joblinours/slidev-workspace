@@ -49,4 +49,6 @@ export interface SlideData {
   class?: string;
   category?: string;
   tags: string[];
+  pdfUrl: string | null;
+  pptxUrl: string | null;
 }

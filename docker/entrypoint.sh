@@ -3,6 +3,7 @@ set -e
 
 WORKSPACE=/workspace
 CLI="node /app/packages/slidev-workspace/dist/cli.js"
+export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # ── 1. Clone the GitHub repo ────────────────────────────────────────────────
 if [ -z "${GITHUB_REPO}" ]; then
@@ -69,6 +70,8 @@ find "${SLIDES_EFFECTIVE_DIR}" -name "slides.md" -not -path "*/node_modules/*" |
     # Force la mise à jour de Slidev vers la dernière version (ignore le lockfile)
     echo "  updating @slidev/cli to latest in ${dir}"
     pnpm add --dir "${dir}" @slidev/cli@latest --no-frozen-lockfile 2>&1 | tail -2 || true
+    echo "  installing playwright-chromium in ${dir}"
+    pnpm add --dir "${dir}" playwright-chromium --no-frozen-lockfile 2>&1 | tail -2 || true
   fi
 done
 
@@ -76,13 +79,17 @@ done
 echo "=== Build de toutes les présentations ==="
 SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build
 
-# ── 5. Configurer Nginx ──────────────────────────────────────────────────────
+# ── 5. Export PDF/PPTX via slidev export ────────────────────────────────────
+echo "=== Export PDF/PPTX de toutes les présentations ==="
+SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export || true
+
+# ── 6. Configurer Nginx ──────────────────────────────────────────────────────
 echo "=== Configuration Nginx ==="
 export BASE_URL="${BASE_URL:-/}"
 envsubst '${BASE_URL}' < /app/docker/nginx.conf.template > /etc/nginx/sites-enabled/slidev-workspace.conf
 nginx -t
 
-# ── 6. Démarrer le cron git pull en arrière-plan ────────────────────────────
+# ── 7. Démarrer le cron git pull en arrière-plan ────────────────────────────
 echo "=== Démarrage du cron git pull (toutes les 30s) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
 WORKSPACE="${WORKSPACE}" \
@@ -91,13 +98,12 @@ BASE_URL="${BASE_URL:-/}" \
 SLIDES_TITLE="${SLIDES_TITLE:-Mes Présentations}" \
   /app/docker/cron-pull.sh &
 
-# ── 7. Démarrer le serveur API (tags + export) en arrière-plan ─────────────
+# ── 8. Démarrer le serveur API (tags) en arrière-plan ──────────────────────
 echo "=== Démarrage du serveur API (port 3099) ==="
 SLIDES_EFFECTIVE_DIR="${SLIDES_EFFECTIVE_DIR}" \
 SLIDEV_WORKSPACE_CWD="${WORKSPACE}" \
-PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
   node /app/packages/slidev-workspace/dist/api-server.js &
 
-# ── 8. Démarrer Nginx ──────────────────────────────────────────────────────
+# ── 9. Démarrer Nginx ──────────────────────────────────────────────────────
 echo "=== Slidev Workspace prêt sur le port 8084 ==="
 exec nginx -g "daemon off;"

@@ -132,6 +132,9 @@ export function useSlides() {
         ? `${devServerUrl}/presenter/1`
         : `${slideBase}presenter/1`;
 
+      const pdfUrl = IS_DEVELOPMENT ? null : slideBase + "export.pdf";
+      const pptxUrl = IS_DEVELOPMENT ? null : slideBase + "export.pptx";
+
       return {
         id: slide.id,
         path: slide.path,
@@ -150,6 +153,8 @@ export function useSlides() {
         class: slide.frontmatter.class,
         category: slide.category,
         tags: slide.frontmatter.tags || [],
+        pdfUrl,
+        pptxUrl,
       };
     });
   });

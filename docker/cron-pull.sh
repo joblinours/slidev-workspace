@@ -5,6 +5,7 @@
 CLI="node /app/packages/slidev-workspace/dist/cli.js"
 SLIDES_DIR="${SLIDES_EFFECTIVE_DIR:-/workspace/slides}"
 WORKSPACE="${WORKSPACE:-/workspace}"
+export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 echo "[cron] Boucle git pull démarrée (toutes les 30s)"
 
@@ -33,6 +34,8 @@ while true; do
       slide_name=$(basename "${slide_rel}")
       echo "[cron] Rebuild: ${slide_name}"
       SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} build "${slide_name}" 2>&1 | tail -5
+      echo "[cron] Export: ${slide_name}"
+      SLIDEV_WORKSPACE_CWD="${WORKSPACE}" ${CLI} export "${slide_name}" 2>&1 | tail -5 || true
     done <<< "${CHANGED}"
   fi
 
