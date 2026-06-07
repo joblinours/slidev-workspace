@@ -69,9 +69,11 @@ find "${SLIDES_EFFECTIVE_DIR}" -name "slides.md" -not -path "*/node_modules/*" |
     CI=true pnpm install --dir "${dir}" --no-frozen-lockfile 2>&1 | tail -3
     # Force la mise à jour de Slidev vers la dernière version (ignore le lockfile)
     echo "  updating @slidev/cli to latest in ${dir}"
-    pnpm add --dir "${dir}" @slidev/cli@latest --no-frozen-lockfile 2>&1 | tail -2 || true
+    pnpm add --dir "${dir}" @slidev/cli@latest 2>&1 | tail -2 || true
     echo "  installing playwright-chromium in ${dir}"
-    pnpm add --dir "${dir}" playwright-chromium --no-frozen-lockfile 2>&1 | tail -2 || true
+    # Pinned to match the Playwright version in the base Docker image (mcr.microsoft.com/playwright:v1.50.0-noble)
+    # so that PLAYWRIGHT_BROWSERS_PATH=/ms-playwright resolves without downloading a new browser
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm add --dir "${dir}" playwright-chromium@1.50.0 2>&1 | tail -2 || true
   fi
 done
 
