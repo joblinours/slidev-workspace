@@ -34,10 +34,6 @@ export async function buildSlides(names?: string[]) {
         cwd: slideDir,
         stdio: "inherit",
       });
-      execSync("pnpm add @slidev/cli@latest", {
-        cwd: slideDir,
-        stdio: "inherit",
-      });
       execSync(
         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm add playwright-chromium@1.50.0",
         { cwd: slideDir, stdio: "inherit" },
