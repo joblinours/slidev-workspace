@@ -16,10 +16,13 @@ function runSlidevExport(
   outputFile: string,
   args: string,
 ): void {
-  execSync(`pnpm exec slidev export slides.md ${args} --timeout 60000`, {
-    cwd: slideDir,
-    stdio: "inherit",
-  });
+  execSync(
+    `./node_modules/.bin/slidev export slides.md ${args} --timeout 60000`,
+    {
+      cwd: slideDir,
+      stdio: "inherit",
+    },
+  );
   const src = join(slideDir, "dist", outputFile);
   if (existsSync(src)) {
     copyFileSync(src, join(outputSlideDir, outputFile));

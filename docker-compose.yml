@@ -17,6 +17,9 @@ services:
       - BASE_URL=${BASE_URL:-/slides/}
       # Titre affiché dans l'interface
       - SLIDES_TITLE=${SLIDES_TITLE:-Mes Présentations}
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     volumes:
       - slides-data:/workspace/slides
       - dist-data:/workspace/dist

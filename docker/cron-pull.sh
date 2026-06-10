@@ -6,6 +6,7 @@ CLI="node /app/packages/slidev-workspace/dist/cli.js"
 SLIDES_DIR="${SLIDES_EFFECTIVE_DIR:-/workspace/slides}"
 WORKSPACE="${WORKSPACE:-/workspace}"
 export PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+export GIT_TERMINAL_PROMPT=0
 
 echo "[cron] Boucle git pull démarrée (toutes les 30s)"
 

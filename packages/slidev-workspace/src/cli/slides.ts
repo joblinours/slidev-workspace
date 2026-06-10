@@ -27,6 +27,23 @@ export async function buildSlides(names?: string[]) {
       continue;
     }
 
+    // Install dependencies for new slides added after container startup
+    if (!existsSync(join(slideDir, "node_modules", ".bin", "slidev"))) {
+      console.log(`📦 Installing dependencies for ${slideName}...`);
+      execSync("CI=true pnpm install --no-frozen-lockfile", {
+        cwd: slideDir,
+        stdio: "inherit",
+      });
+      execSync("pnpm add @slidev/cli@latest", {
+        cwd: slideDir,
+        stdio: "inherit",
+      });
+      execSync(
+        "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 pnpm add playwright-chromium@1.50.0",
+        { cwd: slideDir, stdio: "inherit" },
+      );
+    }
+
     console.log(`📦 Building slide: ${slideName}`);
 
     try {

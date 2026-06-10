@@ -14,7 +14,7 @@ fi
 if [ -z "${GITHUB_PAT}" ]; then
   SLIDES_REPO_URL="https://github.com/${GITHUB_REPO}"
 else
-  SLIDES_REPO_URL="https://${GITHUB_PAT}@github.com/${GITHUB_REPO}"
+  SLIDES_REPO_URL="https://x-access-token:${GITHUB_PAT}@github.com/${GITHUB_REPO}"
 fi
 
 SLIDES_CLONE_DIR="${WORKSPACE}/slides"
